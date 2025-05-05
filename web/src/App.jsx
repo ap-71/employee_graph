@@ -1,0 +1,56 @@
+import { Route, Switch } from 'wouter';
+import { ThemeProvider, CssBaseline } from '@mui/material';
+import theme from './theme';
+import { AuthProvider } from './context/AuthContext';
+import Layout from './components/Layout';
+import ProtectedRoute from './components/ProtectedRoute';
+import PublicRoute from './components/PublicRoute';
+
+// Pages
+import Home from './pages/Home';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Management from './pages/Management';
+import Graph from './pages/Graph';
+
+
+function App() {
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <AuthProvider>
+        <Layout>
+          <Switch>
+            <Route path="/login">
+              <PublicRoute>
+                <Login />
+              </PublicRoute>
+            </Route>
+            <Route path="/register">
+              <PublicRoute>
+                <Register />
+              </PublicRoute>
+            </Route>
+            <Route path="/graph">
+              <ProtectedRoute>
+                <Graph />
+              </ProtectedRoute>
+            </Route>
+            <Route path="/management">
+              <ProtectedRoute>
+                <Management />
+              </ProtectedRoute>
+            </Route>
+            <Route path="/">
+              <ProtectedRoute>
+                <Home />
+              </ProtectedRoute>
+            </Route>
+          </Switch>
+        </Layout>
+      </AuthProvider>
+    </ThemeProvider>
+  );
+}
+
+export default App;

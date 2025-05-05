@@ -2,7 +2,8 @@ from typing import Generic, TypeVar
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from .models import Department, Employee, Position, Project
+
+from .models import Department, Employee, Position, Project, employee_department, employee_position, employee_employee, employee_project
 from .schemas import (
     DepartmentCreate,
     DepartmentRead,
@@ -24,7 +25,7 @@ class CRUDBase(Generic[MODEL, SCHEMA_CREATE, SCHEMA_READ]):
         self.model: MODEL = self.__orig_bases__[0].__args__[0]
         self.schema_create: SCHEMA_CREATE = self.__orig_bases__[0].__args__[1]
         self.schema_read: SCHEMA_READ = self.__orig_bases__[0].__args__[2]
-
+        
     def create(self, db: Session, obj_in) -> MODEL:
         obj = self.model(**obj_in.dict())
         db.add(obj)
@@ -49,7 +50,8 @@ class CRUDBase(Generic[MODEL, SCHEMA_CREATE, SCHEMA_READ]):
             raise HTTPException(status_code=404, detail=f"{self.__class__.__name__}:{obj_id}:Not found")
 
         for field, value in obj_in.dict().items():
-            setattr(obj, field, value)
+            if value is not None:
+                setattr(obj, field, value)
 
         db.commit()
         db.refresh(obj)
@@ -63,6 +65,11 @@ class CRUDBase(Generic[MODEL, SCHEMA_CREATE, SCHEMA_READ]):
         db.delete(obj)
         db.commit()
 
+    def get_count(self, db: Session) -> int:
+        count_ = db.query(self.model).count()
+        
+        return count_
+    
     def bind(self, db: Session, obj_id: int | str, bind_attr_name: str, bind_obj):
         obj = self.get(db, obj_id)
         bind_attr = getattr(obj, bind_attr_name)
@@ -84,6 +91,15 @@ class CRUDDepartment(CRUDBase[Department, DepartmentCreate, DepartmentRead]): ..
 
 
 class CRUDEmployee(CRUDBase[Employee, EmployeeCreate, EmployeeRead]):
+    def bind_employee(self, db: Session, uuid1: str, uuid2: str):
+        db.execute(
+            employee_employee.insert().values(
+                employee1_uuid=uuid1,
+                employee2_uuid=uuid2
+            )
+        )
+        db.commit()
+        
     def get(self, db: Session, obj_id: str) -> MODEL:
         obj = db.query(self.model).filter(self.model.uuid == obj_id).first()
 
@@ -92,6 +108,80 @@ class CRUDEmployee(CRUDBase[Employee, EmployeeCreate, EmployeeRead]):
 
         return obj
 
+    def get_bind_employee(self, db: Session, uuid: str | None = None):
+        query_ = db.query(Employee).join(
+            employee_employee,
+            Employee.uuid == employee_employee.c.employee2_uuid
+        )
+        
+        if uuid is not None:
+            query_ = query_.filter(employee_employee.c.employee1_uuid == uuid)
+            
+        data = query_.all()
+        
+        return data
+    
+    def get_bind_department(self, db: Session, uuid: str | None = None):
+        query_ = db.query(Department).join(employee_department, Department.id == employee_department.c.departments_id)
+        
+        if uuid is not None:
+            query_ = query_.filter(employee_department.c.employee_uuid == uuid)
+            
+        data = query_.all()
+        
+        return data
+    
+    def get_bind_position(self, db: Session, uuid: str | None = None):
+        query_ = db.query(Position).join(employee_position, Position.id == employee_position.c.position_id)
+        
+        if uuid is not None:
+            query_ = query_.filter(employee_position.c.employee_uuid == uuid)
+            
+        data = query_.all()
+        
+        return data
+    
+    def get_bind_project(self, db: Session, uuid: str | None = None):
+        query_ = db.query(Project).join(employee_project, Project.id == employee_project.c.project_id)
+        
+        if uuid is not None:
+            query_ = query_.filter(employee_project.c.employee_uuid == uuid)
+            
+        data = query_.all()
+        
+        return data
+
+    def delete_bind_department(self, db: Session, uuid: str, id: int):
+        db.execute(
+            employee_department.delete()
+            .where(employee_department.c.employee_uuid == uuid)
+            .where(employee_department.c.departments_id == id)
+        )
+        db.commit()
+
+    def delete_bind_employee(self, db: Session, uuid1: str, uuid2: str):
+        db.execute(
+            employee_employee.delete()
+            .where(employee_employee.c.employee1_uuid == uuid1)
+            .where(employee_employee.c.employee2_uuid == uuid2)
+        )
+        db.commit()
+
+    def delete_bind_position(self, db: Session, uuid: str, id: int):
+        db.execute(
+            employee_position.delete()
+            .where(employee_position.c.employee_uuid == uuid)
+            .where(employee_position.c.position_id == id)
+        )
+        db.commit()
+
+    def delete_bind_project(self, db: Session, uuid: str, id: int):
+        db.execute(
+            employee_project.delete()
+            .where(employee_project.c.employee_uuid == uuid)
+            .where(employee_project.c.project_id == id)
+        )
+        db.commit()
 
 class CRUDPosition(CRUDBase[Position, PositionCreate, PositionRead]): ...
 
@@ -103,9 +193,5 @@ class CRUDProject(CRUDBase[Project, ProjectCreate, ProjectRead]): ...
 
 department_crud = CRUDDepartment()
 employee_crud = CRUDEmployee()
-# employee_department_crud = CRUDBase(EmployeeDepartment, EmployeeDepartmentCreate, EmployeeDepartmentRead)
-# employee_employee_crud = CRUDBase(EmployeeEmployee, EmployeeEmployeeCreate, EmployeeEmployeeRead)
 position_crud = CRUDPosition()
-# employee_position_crud = CRUDBase(EmployeePosition, EmployeePositionCreate, EmployeePositionRead)
 project_crud = CRUDProject()
-# employee_project_crud = CRUDBase(EmployeeProject, EmployeeProjectCreate, EmployeeProjectRead)

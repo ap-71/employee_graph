@@ -5,13 +5,18 @@ description = ""
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "bcrypt<4.1.0",
     "black>=25.1.0",
     "fastapi>=0.115.12",
+    "fastapi-mcp>=0.3.3",
     "g4f[all]>=0.5.2.0",
     "gpt4all>=2.8.2",
+    "passlib[bcrypt]>=1.7.4",
     "psycopg2>=2.9.10",
     "pydantic>=2.11.3",
     "pypollinations>=0.2.0",
+    "python-jose>=3.4.0",
+    "python-multipart>=0.0.20",
     "rich>=14.0.0",
     "sqlalchemy>=2.0.40",
     "uvicorn>=0.34.2",
