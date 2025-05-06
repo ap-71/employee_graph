@@ -48,7 +48,9 @@ function TabPanel({ children, value, index, ...other }) {
 }
 
 export default function Profile() {
-  const { user } = useAuth();
+  // FIXME удалить 
+  const user = undefined
+  const { token } = useAuth();
   const [tabValue, setTabValue] = useState(0);
   const [editMode, setEditMode] = useState(false);
   const [snackbar, setSnackbar] = useState({

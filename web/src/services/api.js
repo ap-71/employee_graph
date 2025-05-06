@@ -1,11 +1,30 @@
 // API service for employee management
 const API_BASE_URL = 'http://localhost:8000';
+const token = () => {
+    const accessToken = JSON.parse(localStorage.getItem('token_data'))?.access_token
+
+    if (accessToken === undefined) {
+        localStorage.removeItem('token_data');
+        location.href = "/login"
+    }
+
+    return `Bearer ${accessToken}`
+}
+const processingErrorStatus = (status) => {
+    if ( status === 401){
+        localStorage.removeItem('token_data');
+        location.href = "/login"
+    }
+
+}
 
 // Employee CRUD operations
 export const getEmployees = async () => {
     const response = await fetch(`${API_BASE_URL}/employee/`);
     if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        processingErrorStatus(response.status)
+
+        throw new Error(`HTTP error! status: ${status}`);
     }
     return await response.json();
 };
@@ -18,6 +37,8 @@ export const createEmployee = async (employeeData) => {
     });
 
     if (!response.ok) {
+        processingErrorStatus(response.status)
+
         let errorDetails = '';
         try {
             const errorData = await response.json();
@@ -39,6 +60,8 @@ export const updateEmployee = async (uuid, employeeData) => {
     });
 
     if (!response.ok) {
+        processingErrorStatus(response.status)
+
         let errorDetails = '';
         try {
             const errorData = await response.json();
@@ -58,6 +81,8 @@ export const deleteEmployee = async (uuid) => {
     });
 
     if (!response.ok) {
+        processingErrorStatus(response.status)
+
         let errorDetails = '';
         try {
             const errorData = await response.json();
@@ -75,6 +100,8 @@ export const deleteEmployee = async (uuid) => {
 export const getDepartments = async () => {
     const response = await fetch(`${API_BASE_URL}/departments/`);
     if (!response.ok) {
+        processingErrorStatus(response.status)
+
         throw new Error(`Departments fetch failed: ${response.status}`);
     }
     return await response.json();
@@ -83,6 +110,8 @@ export const getDepartments = async () => {
 export const getPositions = async () => {
     const response = await fetch(`${API_BASE_URL}/positions/`);
     if (!response.ok) {
+        processingErrorStatus(response.status)
+
         throw new Error(`Positions fetch failed: ${response.status}`);
     }
     return await response.json();
@@ -91,6 +120,8 @@ export const getPositions = async () => {
 export const getProjects = async () => {
     const response = await fetch(`${API_BASE_URL}/projects/`);
     if (!response.ok) {
+        processingErrorStatus(response.status)
+
         throw new Error(`Projects fetch failed: ${response.status}`);
     }
     return await response.json();
@@ -108,6 +139,8 @@ export const getProjects = async () => {
 export const getEmployeeDepartments = async (employeeUuid) => {
     const response = await fetch(`${API_BASE_URL}/employee_department/${employeeUuid}`);
     if (!response.ok) {
+        processingErrorStatus(response.status)
+
         throw new Error(`Employee departments fetch failed: ${response.status}`);
     }
     return await response.json();
@@ -116,6 +149,8 @@ export const getEmployeeDepartments = async (employeeUuid) => {
 export const getEmployeePositions = async (employeeUuid) => {
     const response = await fetch(`${API_BASE_URL}/employee_position/${employeeUuid}`);
     if (!response.ok) {
+        processingErrorStatus(response.status)
+
         throw new Error(`Employee positions fetch failed: ${response.status}`);
     }
     return await response.json();
@@ -124,6 +159,8 @@ export const getEmployeePositions = async (employeeUuid) => {
 export const getEmployeeProjects = async (employeeUuid) => {
     const response = await fetch(`${API_BASE_URL}/employee_project/${employeeUuid}`);
     if (!response.ok) {
+        processingErrorStatus(response.status)
+
         throw new Error(`Employee projects fetch failed: ${response.status}`);
     }
     return await response.json();
@@ -132,6 +169,8 @@ export const getEmployeeProjects = async (employeeUuid) => {
 export const getEmployeeEmployee = async (employeeUuid) => {
     const response = await fetch(`${API_BASE_URL}/employee_employee/${employeeUuid}`);
     if (!response.ok) {
+        processingErrorStatus(response.status)
+
         throw new Error(`Linked employees fetch failed: ${response.status}`);
     }
     return await response.json();
@@ -175,6 +214,8 @@ async function assignRelation(url, body) {
     });
 
     if (!response.ok) {
+        processingErrorStatus(response.status)
+
         let errorDetails = '';
         try {
             const errorData = await response.json();
@@ -227,6 +268,8 @@ async function deleteRelation(url, body) {
     });
 
     if (!response.ok) {
+        processingErrorStatus(response.status)
+
         let errorDetails = '';
         try {
             const errorData = await response.json();
@@ -254,8 +297,14 @@ export async function getCountProjects() {
 }
 // Helper function
 async function getCounts(name) {
-    const response = await fetch(`${API_BASE_URL}/${name}/count`);
+    const response = await fetch(`${API_BASE_URL}/${name}/count`, {
+        headers: {
+            authorization: token()
+        }
+    });
     if (!response.ok) {
+        processingErrorStatus(response.status)
+
         throw new Error(`Employee positions fetch failed: ${response.status}`, {
             status: response.status,
             data: await response.json()
@@ -265,8 +314,33 @@ async function getCounts(name) {
 }
 
 export async function getGraph() {
-    const res = await fetch(`${API_BASE_URL}/graph`);
+    const res = await fetch(`${API_BASE_URL}/graph`, {
+        headers: {
+            authorization: token()
+        }
+    });
     const data = await res.json();
 
     return data
+}
+
+export async function getToken(data = {}){
+    const formData = new FormData()
+
+    formData.append("username", data.username)
+    formData.append("password", data.password)
+
+    const body = new URLSearchParams(formData).toString();
+
+    const res = await fetch(`${API_BASE_URL}/token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body
+    });
+
+    if(!res.ok){
+        throw new Error(`HTTP error! status: ${res.status}`);
+    }
+
+    return await res.json()
 }

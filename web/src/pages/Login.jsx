@@ -47,8 +47,8 @@ export default function Login() {
       // For demo purposes, we'll just mock a successful login
       setTimeout(() => {
         login({
-          username: formData.email.split('@')[0],
-          email: formData.email,
+          username: formData.username,
+          password: formData.password,
           id: Math.random().toString(36).substring(2, 8)
         });
         navigate('/');
@@ -99,12 +99,12 @@ export default function Login() {
                 margin="normal"
                 required
                 fullWidth
-                id="email"
-                label="Электронная почта"
-                name="email"
-                autoComplete="email"
+                id="username"
+                label="Имя пользователя"
+                name="username"
+                autoComplete="username"
                 autoFocus
-                value={formData.email}
+                value={formData.username}
                 onChange={handleChange}
                 variant="outlined"
                 sx={{ mb: 2 }}

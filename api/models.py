@@ -1,5 +1,5 @@
 from typing import List
-from sqlalchemy import ForeignKey, Integer, String, Table, Column, UniqueConstraint
+from sqlalchemy import Boolean, ForeignKey, Integer, String, Table, Column, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped, relationship
 from api.db import engine
 
@@ -50,7 +50,7 @@ class User(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     username: Mapped[str] = mapped_column(unique=True, nullable=False)
     hashed_password: Mapped[str] = mapped_column(unique=True, nullable=False)
-    
+    is_active: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     
 class Department(Base):
     __tablename__ = "departments"
@@ -103,7 +103,3 @@ class Project(Base):
     employees: Mapped[List["Employee"]] = relationship(
         "Employee", secondary=employee_project, back_populates=__tablename__
     )
-
-
-# Создаем таблицы
-Base.metadata.create_all(bind=engine)

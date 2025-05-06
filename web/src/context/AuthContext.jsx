@@ -1,50 +1,50 @@
 import { createContext, useState, useContext, useEffect } from 'react';
+import { getToken } from '../services/api';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for user in local storage on mount
-    const storedUser = localStorage.getItem('user');
-    if (storedUser && storedUser !== 'undefined') {
+    const storedTokenData = localStorage.getItem('token_data');
+    if (storedTokenData && storedTokenData !== 'undefined') {
       try {
-        setUser(JSON.parse(storedUser));
+        setToken(JSON.parse(storedTokenData));
       } catch (error) {
-        console.error('Error parsing user from localStorage:', error);
-        localStorage.removeItem('user'); // Удаляем некорректные данные
+        console.error('Error parsing token_data from localStorage:', error);
+        localStorage.removeItem('token_data'); // Удаляем некорректные данные
       }
     }
     setLoading(false);
   }, []);
 
-  const login = (userData) => {
-    // Save user to state and localStorage
-    setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
+  const login = (data) => {
+    getToken(data).then(tokenData => {
+      setToken(tokenData?.access_token)
+  
+      localStorage.setItem('token_data', JSON.stringify(tokenData));
+    })
   };
 
-  const register = async (userData) => {
-    // For demo purposes, just log in the user directly
-    login(userData);
+  const register = async (data) => {
+    login(data);
     return { success: true };
   };
 
   const logout = () => {
-    // Remove user from state and localStorage
-    setUser(null);
-    localStorage.removeItem('user');
+    setToken(null);
+    localStorage.removeItem('token_data');
   };
 
   const value = {
-    user,
+    token,
     loading,
     login,
     logout,
     register,
-    isAuthenticated: !!user,
+    isAuthenticated: !!token,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

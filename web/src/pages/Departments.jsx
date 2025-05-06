@@ -9,7 +9,6 @@ import AddIcon from '@mui/icons-material/Add';
 const API_BASE_URL = 'http://localhost:8000'; // Adjust if necessary
 
 export default function Departments() {
-    // const { user } = useAuth(); // Uncomment if auth is needed
     const [departments, setDepartments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);

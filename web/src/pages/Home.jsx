@@ -13,7 +13,7 @@ import {
 import { getCountDepartments, getCountEmployees, getCountPositions, getCountProjects } from '../services/api';
 
 export default function Home() {
-  const { user } = useAuth();
+  const { token } = useAuth();
   const [fadeIn, setFadeIn] = useState(false);
   const [stats, setStats] = useState({
     employees: 0,

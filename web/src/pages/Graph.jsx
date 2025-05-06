@@ -4,7 +4,7 @@ import 'reactflow/dist/style.css';
 import GraphComponent from "../components/GraphComponent";
 
 export default function Graph() {
-  const { user } = useAuth();
+  const { token } = useAuth();
 
   return (
     <Box sx={{ flexGrow: 1 }}>

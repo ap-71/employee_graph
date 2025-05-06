@@ -34,11 +34,13 @@ import {
 } from '@mui/icons-material';
 
 export default function Layout({ children }) {
+  const user = undefined
+  // FIXME delete user
   const [drawerOpen, setDrawerOpen] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [location, navigate] = useLocation();
-  const { user, isAuthenticated, logout } = useAuth();
+  const { token, isAuthenticated, logout } = useAuth();
 
   const handleLogout = () => {
     logout();

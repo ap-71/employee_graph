@@ -4,7 +4,7 @@ import { CircularProgress, Box } from '@mui/material';
 
 export default function ProtectedRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();
-
+  console.debug(isAuthenticated)
   // Показываем индикатор загрузки при проверке аутентификации
   if (loading) {
     return (

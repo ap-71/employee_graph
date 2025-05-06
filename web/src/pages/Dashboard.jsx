@@ -50,7 +50,7 @@ const mockData = {
 };
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { token } = useAuth();
   const [stats, setStats] = useState([]);
   const [projects, setProjects] = useState([]);
   const [notifications, setNotifications] = useState([]);
