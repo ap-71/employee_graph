@@ -1,12 +1,10 @@
 import { useEffect, useState } from "react";
-// import { useAuth } from "../context/AuthContext"; // Uncomment if auth is needed
 import { Box, LinearProgress, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField } from "@mui/material";
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
+import { createDepartment, deleteDepartment, getDepartments, updateDepartment } from "../services/api";
 
-// Base URL for the API
-const API_BASE_URL = 'http://localhost:8000'; // Adjust if necessary
 
 export default function Departments() {
     const [departments, setDepartments] = useState([]);
@@ -14,19 +12,14 @@ export default function Departments() {
     const [error, setError] = useState(null);
     const [openFormDialog, setOpenFormDialog] = useState(false);
     const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-    const [selectedDepartment, setSelectedDepartment] = useState(null); // For editing/deleting
-    const [formData, setFormData] = useState({ id: null, name: '', description: '' }); // For create/edit form
+    const [selectedDepartment, setSelectedDepartment] = useState(null);
+    const [formData, setFormData] = useState({ id: null, name: '', description: '' });
 
     const fetchDepartments = async () => {
       setLoading(true);
       setError(null);
       try {
-        // API Call: mcp_fastapi-mcp_get_departments_departments__get
-        const response = await fetch(`${API_BASE_URL}/departments/`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
+        const data = await getDepartments()
         setDepartments(data || []);
       } catch (err) {
         console.error("Failed to fetch departments:", err);
@@ -76,8 +69,7 @@ export default function Departments() {
     const handleFormSubmit = async () => {
       setLoading(true);
       setError(null);
-      let url = '';
-      let options = {};
+
       const bodyData = {
           name: formData.name,
           description: formData.description
@@ -85,37 +77,13 @@ export default function Departments() {
 
       try {
         if (selectedDepartment) {
-          // Update Department: mcp_fastapi-mcp_update_department_departments__id__put
-          url = `${API_BASE_URL}/departments/${selectedDepartment.id}`;
-          options = {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(bodyData)
-          };
+          await updateDepartment(selectedDepartment.id, bodyData)
         } else {
-          // Create Department: mcp_fastapi-mcp_create_department_departments__post
-          url = `${API_BASE_URL}/departments/`;
-          options = {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(bodyData)
-          };
-        }
-
-        const response = await fetch(url, options);
-        if (!response.ok) {
-          let errorDetails = '';
-          try {
-            const errorData = await response.json();
-            errorDetails = errorData.detail || JSON.stringify(errorData);
-          } catch {
-             errorDetails = await response.text();
-          }
-          throw new Error(`HTTP error! status: ${response.status}, details: ${errorDetails}`);
+          await createDepartment(bodyData)
         }
 
         handleCloseFormDialog();
-        await fetchDepartments(); // Refresh list
+        await fetchDepartments();
       } catch (err) {
         console.error("Failed to save department:", err);
         setError(`${selectedDepartment ? "Не удалось обновить отдел" : "Не удалось создать отдел"}: ${err.message}`);
@@ -129,24 +97,10 @@ export default function Departments() {
       setLoading(true);
       setError(null);
       try {
-        // Delete Department: mcp_fastapi-mcp_delete_department_departments__id__delete
-        const response = await fetch(`${API_BASE_URL}/departments/${selectedDepartment.id}`, {
-          method: 'DELETE'
-        });
-
-        if (!response.ok) {
-           let errorDetails = '';
-           try {
-             const errorData = await response.json();
-             errorDetails = errorData.detail || JSON.stringify(errorData);
-           } catch {
-              errorDetails = await response.text();
-           }
-          throw new Error(`HTTP error! status: ${response.status}, details: ${errorDetails}`);
-        }
-
+        await deleteDepartment(selectedDepartment.id)
+        
         handleCloseDeleteDialog();
-        await fetchDepartments(); // Refresh list
+        await fetchDepartments();
       } catch (err) {
         console.error("Failed to delete department:", err);
         setError(`Не удалось удалить отдел: ${err.message}`);
@@ -155,7 +109,6 @@ export default function Departments() {
       }
     };
 
-    // --- UI ---
     if (loading && departments.length === 0) {
       return (
         <Box sx={{ width: '100%', mt: 4 }}>

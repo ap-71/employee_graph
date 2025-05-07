@@ -18,7 +18,7 @@ export default function GraphComponent({ width = 800, height = 600 } = {}) {
     const [highlightLinks, setHighlightLinks] = useState(new Set());
     const [graphData, setGraphData] = useState({ nodes: [], links: [] })
     const [loading, setLoading] = useState(true)
-    const [distance, setDistance] = useState(250); // расстояние между нодами
+    const [distance, setDistance] = useState(100); // расстояние между нодами
 
     const setLinksDistance = (current) => {
         if (fgRef.current) {

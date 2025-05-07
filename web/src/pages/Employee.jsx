@@ -35,14 +35,14 @@ export default function Employee() {
     const [error, setError] = useState(null);
     const [openFormDialog, setOpenFormDialog] = useState(false);
     const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-    const [selectedEmployee, setSelectedEmployee] = useState(null); // For editing/deleting
-    const [formData, setFormData] = useState({ uuid: '', fio: '' }); // For create/edit form
+    const [selectedEmployee, setSelectedEmployee] = useState(null);
+    const [formData, setFormData] = useState({ uuid: '', fio: '' });
 
     // State for relations dialog
     const [openRelationsDialog, setOpenRelationsDialog] = useState(false);
-    const [relationsEmployee, setRelationsEmployee] = useState(null); // Employee whose relations are being managed
-    const [relationsLoading, setRelationsLoading] = useState(false); // Loading state for dropdown data
-    const [relationsError, setRelationsError] = useState(null); // Error state for dropdown data/assignment
+    const [relationsEmployee, setRelationsEmployee] = useState(null);
+    const [relationsLoading, setRelationsLoading] = useState(false);
+    const [relationsError, setRelationsError] = useState(null);
     const [allDepartments, setAllDepartments] = useState([]);
     const [allPositions, setAllPositions] = useState([]);
     const [allProjects, setAllProjects] = useState([]);
@@ -51,7 +51,7 @@ export default function Employee() {
     const [selectedPositionId, setSelectedPositionId] = useState('');
     const [selectedProjectId, setSelectedProjectId] = useState('');
     const [selectedEmployee2Uuid, setSelectedEmployee2Uuid] = useState('');
-    const [assigningRelation, setAssigningRelation] = useState(null); // Track which relation is being assigned (e.g., 'department')
+    const [assigningRelation, setAssigningRelation] = useState(null);
 
     // State for view relationships dialog
     const [openViewRelationsDialog, setOpenViewRelationsDialog] = useState(false);
@@ -63,7 +63,7 @@ export default function Employee() {
     const [employeeProjects, setEmployeeProjects] = useState([]);
     const [linkedEmployees, setLinkedEmployees] = useState([]);
     const [currentTab, setCurrentTab] = useState(0);
-    const [deletingRelation, setDeletingRelation] = useState(null); // Track which relation is being deleted
+    const [deletingRelation, setDeletingRelation] = useState(null);
 
     const fetchEmployees = async () => {
       setLoading(true);
@@ -117,25 +117,22 @@ export default function Employee() {
     };
 
     const handleFormSubmit = async () => {
-      setLoading(true); // Show loading indicator during submit
-      setError(null); // Clear previous errors
+      setLoading(true);
+      setError(null);
 
       try {
         if (selectedEmployee) {
-          // Update employee
           await updateEmployee(selectedEmployee.uuid, { fio: formData.fio });
         } else {
-          // Create employee
-          const newUuid = formData.uuid || self.crypto.randomUUID(); // Basic UUID generation
+          const newUuid = formData.uuid || self.crypto.randomUUID();
           await createEmployee({ uuid: newUuid, fio: formData.fio });
         }
 
         handleCloseFormDialog();
-        await fetchEmployees(); // Refresh list after successful operation
+        await fetchEmployees();
       } catch (err) {
         console.error("Failed to save employee:", err);
         setError(`${selectedEmployee ? "Не удалось обновить сотрудника" : "Не удалось создать сотрудника"}: ${err.message}`);
-        // Keep dialog open on error
       } finally {
         setLoading(false);
       }
@@ -148,23 +145,19 @@ export default function Employee() {
       try {
         await deleteEmployee(selectedEmployee.uuid);
         handleCloseDeleteDialog();
-        await fetchEmployees(); // Refresh list
+        await fetchEmployees();
       } catch (err) {
         console.error("Failed to delete employee:", err);
         setError(`Не удалось удалить сотрудника: ${err.message}`);
-        // Keep dialog open or show error?
       } finally {
         setLoading(false);
       }
     };
 
-    // --- Relations Dialog Functions ---
-
     const fetchRelationDropdownData = async (employeeUuid) => {
       setRelationsLoading(true);
       setRelationsError(null);
       try {
-        // Fetch all available options and existing relationships
         const [
           departments, 
           positions, 
@@ -185,25 +178,21 @@ export default function Employee() {
           getEmployeeEmployee(employeeUuid)
         ]);
 
-        // Filter out departments that are already assigned
         const existingDepartmentIds = (employeeDepartments || []).map(dept => dept.id);
         const availableDepartments = (departments || []).filter(dept => 
           !existingDepartmentIds.includes(dept.id)
         );
         
-        // Filter out positions that are already assigned
         const existingPositionIds = (employeePositions || []).map(pos => pos.id);
         const availablePositions = (positions || []).filter(pos => 
           !existingPositionIds.includes(pos.id)
         );
         
-        // Filter out projects that are already assigned
         const existingProjectIds = (employeeProjects || []).map(proj => proj.id);
         const availableProjects = (projects || []).filter(proj => 
           !existingProjectIds.includes(proj.id)
         );
         
-        // Filter out employees that are already linked and the current employee
         const existingEmployeeUuids = (linkedEmps || []).map(emp => emp.uuid);
         const availableEmployees = (employees || []).filter(emp => 
           emp.uuid !== employeeUuid && !existingEmployeeUuids.includes(emp.uuid)
@@ -228,7 +217,7 @@ export default function Employee() {
       setSelectedPositionId('');
       setSelectedProjectId('');
       setSelectedEmployee2Uuid('');
-      setRelationsError(null); // Clear previous errors
+      setRelationsError(null);
       setAssigningRelation(null);
       setOpenRelationsDialog(true);
       fetchRelationDropdownData(employee.uuid);
@@ -245,15 +234,14 @@ export default function Employee() {
       setAssigningRelation(null);
     };
 
-    // Generic function to assign a relation
     const assignRelation = async (type, assignFunction, ...params) => {
-      setAssigningRelation(type); // Show loading on the specific button
+      setAssigningRelation(type);
       setRelationsError(null);
       try {
           await assignFunction(...params);
-          // Refresh the dropdown data after successful assignment
+
           await fetchRelationDropdownData(relationsEmployee.uuid);
-          // Reset the specific select
+
           if(type === 'department') setSelectedDepartmentId('');
           if(type === 'position') setSelectedPositionId('');
           if(type === 'project') setSelectedProjectId('');
@@ -264,7 +252,7 @@ export default function Employee() {
           console.error(`Failed to assign ${type}:`, err);
           setRelationsError(`Не удалось назначить ${type}: ${err.message}`);
       } finally {
-          setAssigningRelation(null); // Hide loading on the specific button
+          setAssigningRelation(null);
       }
     };
 
@@ -287,8 +275,6 @@ export default function Employee() {
       if (!selectedEmployee2Uuid || !relationsEmployee) return;
       assignRelation('employee', linkEmployees, relationsEmployee.uuid, selectedEmployee2Uuid);
     };
-
-    // --- End Relations Dialog Functions ---
 
     const fetchEmployeeRelationships = async (employeeUuid) => {
       setViewRelationsLoading(true);
@@ -334,16 +320,15 @@ export default function Employee() {
       setCurrentTab(newValue);
     };
 
-    // Functions to delete relationships
     const handleDeleteDepartment = async (departmentId) => {
       if (!viewRelationsEmployee) return;
       setDeletingRelation(`department-${departmentId}`);
       setViewRelationsError(null);
       try {
         await removeEmployeeDepartment(viewRelationsEmployee.uuid, departmentId);
-        // Refresh relations after delete
+
         await fetchEmployeeRelationships(viewRelationsEmployee.uuid);
-        // Also refresh data for relations dialog if it's the same employee
+
         if (relationsEmployee && relationsEmployee.uuid === viewRelationsEmployee.uuid) {
           await fetchRelationDropdownData(viewRelationsEmployee.uuid);
         }
@@ -361,9 +346,9 @@ export default function Employee() {
       setViewRelationsError(null);
       try {
         await removeEmployeePosition(viewRelationsEmployee.uuid, positionId);
-        // Refresh relations after delete
+
         await fetchEmployeeRelationships(viewRelationsEmployee.uuid);
-        // Also refresh data for relations dialog if it's the same employee
+
         if (relationsEmployee && relationsEmployee.uuid === viewRelationsEmployee.uuid) {
           await fetchRelationDropdownData(viewRelationsEmployee.uuid);
         }
@@ -381,9 +366,9 @@ export default function Employee() {
       setViewRelationsError(null);
       try {
         await removeEmployeeProject(viewRelationsEmployee.uuid, projectId);
-        // Refresh relations after delete
+
         await fetchEmployeeRelationships(viewRelationsEmployee.uuid);
-        // Also refresh data for relations dialog if it's the same employee
+
         if (relationsEmployee && relationsEmployee.uuid === viewRelationsEmployee.uuid) {
           await fetchRelationDropdownData(viewRelationsEmployee.uuid);
         }
@@ -401,9 +386,9 @@ export default function Employee() {
       setViewRelationsError(null);
       try {
         await unlinkEmployees(viewRelationsEmployee.uuid, employee2Uuid);
-        // Refresh relations after delete
+
         await fetchEmployeeRelationships(viewRelationsEmployee.uuid);
-        // Also refresh data for relations dialog if it's the same employee
+
         if (relationsEmployee && relationsEmployee.uuid === viewRelationsEmployee.uuid) {
           await fetchRelationDropdownData(viewRelationsEmployee.uuid);
         }
@@ -415,7 +400,7 @@ export default function Employee() {
       }
     };
 
-    if (loading && employees.length === 0) { // Show loading only on initial load
+    if (loading && employees.length === 0) {
       return (
         <Box sx={{ width: '100%', mt: 4 }}>
           <LinearProgress color="secondary" />
@@ -505,7 +490,7 @@ export default function Employee() {
               onChange={handleFormChange}
               required
             />
-            {!selectedEmployee && ( // Only show UUID for creation if needed, often backend generates this
+            {!selectedEmployee && (
                <TextField
                  margin="dense"
                  id="uuid"

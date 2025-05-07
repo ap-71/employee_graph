@@ -3,9 +3,8 @@ import { Box, LinearProgress, Typography, Table, TableBody, TableCell, TableCont
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
+import { createProject, deleteProject, getProjects, updateProject } from "../services/api";
 
-// Base URL for the API
-const API_BASE_URL = 'http://localhost:8000'; // Adjust if necessary
 
 export default function Projects() {
     const [projects, setProjects] = useState([]);
@@ -13,26 +12,21 @@ export default function Projects() {
     const [error, setError] = useState(null);
     const [openFormDialog, setOpenFormDialog] = useState(false);
     const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-    const [selectedProject, setSelectedProject] = useState(null); // For editing/deleting
-    const [formData, setFormData] = useState({ id: null, value: '', description: '' }); // For create/edit form
+    const [selectedProject, setSelectedProject] = useState(null);
+    const [formData, setFormData] = useState({ id: null, value: '', description: '' });
 
     const fetchProjects = async () => {
       setLoading(true);
       setError(null);
-      try {
-        // API Call: mcp_fastapi-mcp_get_projects_projects__get
-        const response = await fetch(`${API_BASE_URL}/projects/`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
+
+      getProjects().then(data => {
         setProjects(data || []);
-      } catch (err) {
+      }).catch(err => {
         console.error("Failed to fetch projects:", err);
         setError(`Не удалось загрузить список проектов: ${err.message}`);
-      } finally {
+      }).finally(() => {
         setLoading(false);
-      }
+      })
     };
 
     useEffect(() => {
@@ -75,8 +69,7 @@ export default function Projects() {
     const handleFormSubmit = async () => {
       setLoading(true);
       setError(null);
-      let url = '';
-      let options = {};
+
       const bodyData = {
           value: formData.value,
           description: formData.description
@@ -84,33 +77,9 @@ export default function Projects() {
 
       try {
         if (selectedProject) {
-          // Update Project: mcp_fastapi-mcp_update_project_projects__id__put
-          url = `${API_BASE_URL}/projects/${selectedProject.id}`;
-          options = {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(bodyData)
-          };
+          await updateProject(selectedProject.id, bodyData)
         } else {
-          // Create Project: mcp_fastapi-mcp_create_project_projects__post
-          url = `${API_BASE_URL}/projects/`;
-          options = {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(bodyData)
-          };
-        }
-
-        const response = await fetch(url, options);
-        if (!response.ok) {
-          let errorDetails = '';
-          try {
-            const errorData = await response.json();
-            errorDetails = errorData.detail || JSON.stringify(errorData);
-          } catch {
-             errorDetails = await response.text();
-          }
-          throw new Error(`HTTP error! status: ${response.status}, details: ${errorDetails}`);
+          await createProject(bodyData)
         }
 
         handleCloseFormDialog();
@@ -127,22 +96,9 @@ export default function Projects() {
       if (!selectedProject) return;
       setLoading(true);
       setError(null);
-      try {
-        // Delete Project: mcp_fastapi-mcp_delete_project_projects__id__delete
-        const response = await fetch(`${API_BASE_URL}/projects/${selectedProject.id}`, {
-          method: 'DELETE'
-        });
 
-        if (!response.ok) {
-           let errorDetails = '';
-           try {
-             const errorData = await response.json();
-             errorDetails = errorData.detail || JSON.stringify(errorData);
-           } catch {
-              errorDetails = await response.text();
-           }
-          throw new Error(`HTTP error! status: ${response.status}, details: ${errorDetails}`);
-        }
+      try {
+        await deleteProject(selectedProject.id)
 
         handleCloseDeleteDialog();
         await fetchProjects(); // Refresh list
@@ -154,7 +110,6 @@ export default function Projects() {
       }
     };
 
-    // --- UI ---
     if (loading && projects.length === 0) {
       return (
         <Box sx={{ width: '100%', mt: 4 }}>

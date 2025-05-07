@@ -3,9 +3,8 @@ import { Box, LinearProgress, Typography, Table, TableBody, TableCell, TableCont
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
+import { createPositions, deletePositions, getPositions, updatePositions } from "../services/api";
 
-// Base URL for the API
-const API_BASE_URL = 'http://localhost:8000'; // Adjust if necessary
 
 export default function Positions() {
     const [positions, setPositions] = useState([]);
@@ -20,12 +19,7 @@ export default function Positions() {
       setLoading(true);
       setError(null);
       try {
-        // API Call: mcp_fastapi-mcp_get_positions_positions__get
-        const response = await fetch(`${API_BASE_URL}/positions/`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
+        const data = await getPositions()
         setPositions(data || []);
       } catch (err) {
         console.error("Failed to fetch positions:", err);
@@ -75,8 +69,6 @@ export default function Positions() {
     const handleFormSubmit = async () => {
       setLoading(true);
       setError(null);
-      let url = '';
-      let options = {};
       const bodyData = {
           value: formData.value,
           description: formData.description
@@ -84,37 +76,13 @@ export default function Positions() {
 
       try {
         if (selectedPosition) {
-          // Update Position: mcp_fastapi-mcp_update_position_positions__id__put
-          url = `${API_BASE_URL}/positions/${selectedPosition.id}`;
-          options = {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(bodyData)
-          };
+          await updatePositions(selectedPosition.id, bodyData)
         } else {
-          // Create Position: mcp_fastapi-mcp_create_position_positions__post
-          url = `${API_BASE_URL}/positions/`;
-          options = {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(bodyData)
-          };
-        }
-
-        const response = await fetch(url, options);
-        if (!response.ok) {
-          let errorDetails = '';
-          try {
-            const errorData = await response.json();
-            errorDetails = errorData.detail || JSON.stringify(errorData);
-          } catch {
-             errorDetails = await response.text();
-          }
-          throw new Error(`HTTP error! status: ${response.status}, details: ${errorDetails}`);
+          await createPositions(bodyData)
         }
 
         handleCloseFormDialog();
-        await fetchPositions(); // Refresh list
+        await fetchPositions();
       } catch (err) {
         console.error("Failed to save position:", err);
         setError(`${selectedPosition ? "Не удалось обновить должность" : "Не удалось создать должность"}: ${err.message}`);
@@ -128,24 +96,10 @@ export default function Positions() {
       setLoading(true);
       setError(null);
       try {
-        // Delete Position: mcp_fastapi-mcp_delete_position_positions__id__delete
-        const response = await fetch(`${API_BASE_URL}/positions/${selectedPosition.id}`, {
-          method: 'DELETE'
-        });
-
-        if (!response.ok) {
-           let errorDetails = '';
-           try {
-             const errorData = await response.json();
-             errorDetails = errorData.detail || JSON.stringify(errorData);
-           } catch {
-              errorDetails = await response.text();
-           }
-          throw new Error(`HTTP error! status: ${response.status}, details: ${errorDetails}`);
-        }
+        await deletePositions(selectedPosition.id);
 
         handleCloseDeleteDialog();
-        await fetchPositions(); // Refresh list
+        await fetchPositions();
       } catch (err) {
         console.error("Failed to delete position:", err);
         setError(`Не удалось удалить должность: ${err.message}`);

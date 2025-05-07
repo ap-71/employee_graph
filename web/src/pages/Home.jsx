@@ -26,7 +26,6 @@ export default function Home() {
   useEffect(() => {
     setFadeIn(true);
     
-    // Fetch dashboard stats
     const fetchStats = async () => {
       try {
         const [employeesRes, departmentsRes, positionsRes, projectsRes] = await Promise.all([

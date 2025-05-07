@@ -1,5 +1,5 @@
 import { createContext, useState, useContext, useEffect } from 'react';
-import { getToken } from '../services/api';
+import { getToken, registerAccount } from '../services/api';
 
 const AuthContext = createContext(null);
 
@@ -29,7 +29,11 @@ export function AuthProvider({ children }) {
   };
 
   const register = async (data) => {
-    login(data);
+    registerAccount(data).then(tokenData => {
+      setToken(tokenData?.access_token)
+  
+      localStorage.setItem('token_data', JSON.stringify(tokenData));
+    })
     return { success: true };
   };
 

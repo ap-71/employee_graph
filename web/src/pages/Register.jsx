@@ -63,10 +63,6 @@ export default function Register() {
         return false;
       }
     } else if (activeStep === 1) {
-      if (!formData.email) {
-        setError('Email обязателен');
-        return false;
-      }
       if (!formData.password) {
         setError('Пароль обязателен');
         return false;
@@ -95,16 +91,16 @@ export default function Register() {
     setError('');
 
     try {
-      // For demo purposes, we'll just mock a successful registration
       setTimeout(() => {
         register({
           username: formData.username,
-          email: formData.email,
+          password: formData.password,
           id: Math.random().toString(36).substring(2, 8)
         });
         navigate('/');
       }, 1500);
     } catch (err) {
+      console.debug(err);
       setError('Регистрация не удалась. Пожалуйста, попробуйте снова.');
       setIsLoading(false);
     }
@@ -169,20 +165,6 @@ export default function Register() {
                 </Box>
               ) : (
                 <Box>
-                  <TextField
-                    margin="normal"
-                    required
-                    fullWidth
-                    id="email"
-                    label="Email адрес"
-                    name="email"
-                    autoComplete="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    variant="outlined"
-                    sx={{ mb: 2 }}
-                  />
-
                   <TextField
                     margin="normal"
                     required
