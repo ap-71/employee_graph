@@ -14,6 +14,8 @@ COPY uv.lock .
 
 # Install Python dependencies
 RUN pip install --no-cache-dir uv && \
+    uv venv && \
+    . .venv/bin/activate && \
     uv pip install --no-cache-dir -e .
 
 # Copy application code
