@@ -12,5 +12,5 @@ wheels/
 .env
 tmp
 main.py
-
+nginx/ssl
 db.db
