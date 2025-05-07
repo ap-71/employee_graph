@@ -34,13 +34,11 @@ import {
 } from '@mui/icons-material';
 
 export default function Layout({ children }) {
-  const user = undefined
-  // FIXME delete user
   const [drawerOpen, setDrawerOpen] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [location, navigate] = useLocation();
-  const { token, isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, logout, user } = useAuth();
 
   const handleLogout = () => {
     logout();
@@ -52,9 +50,6 @@ export default function Layout({ children }) {
         { text: 'Главная', icon: <HomeIcon />, path: '/' },
         { text: 'Граф', icon: <ScatterPlotIcon />, path: '/graph' },
         { text: 'Управление', icon: <ManageAccountsIcon />, path: '/management' },
-        // { text: 'Отделы', icon: <BusinessIcon />, path: '/departments' },
-        // { text: 'Должности', icon: <WorkIcon />, path: '/positions' },
-        // { text: 'Проекты', icon: <AccountTreeIcon />, path: '/projects' },
       ]
     : [
         { text: 'Вход', icon: <LoginIcon />, path: '/login' },
@@ -84,9 +79,6 @@ export default function Layout({ children }) {
               {user?.username?.charAt(0) || 'П'}
             </Avatar>
             <Typography variant="h6">{user?.username || 'Пользователь'}</Typography>
-            <Typography variant="body2" color="text.secondary">
-              {user?.email || 'user@example.com'}
-            </Typography>
           </>
         )}
       </Box>

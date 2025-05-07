@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
 import { 
   Typography, 
   Box, 
@@ -13,7 +12,6 @@ import {
 import { getCountDepartments, getCountEmployees, getCountPositions, getCountProjects } from '../services/api';
 
 export default function Home() {
-  const { token } = useAuth();
   const [fadeIn, setFadeIn] = useState(false);
   const [stats, setStats] = useState({
     employees: 0,

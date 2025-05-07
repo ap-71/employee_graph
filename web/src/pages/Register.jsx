@@ -26,7 +26,7 @@ import {
 } from '@mui/icons-material';
 
 export default function Register() {
-  const [location, navigate] = useLocation();
+  const [, navigate] = useLocation();
   const { register } = useAuth();
   const [activeStep, setActiveStep] = useState(0);
   const [formData, setFormData] = useState({
