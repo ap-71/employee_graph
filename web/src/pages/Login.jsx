@@ -21,8 +21,8 @@ import {
 } from '@mui/icons-material';
 
 export default function Login() {
-  const [location, navigate] = useLocation();
-  const { login } = useAuth();
+  const [, navigate] = useLocation();
+  const { login, setUser } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -44,16 +44,17 @@ export default function Login() {
     setError('');
 
     try {
-      // For demo purposes, we'll just mock a successful login
       setTimeout(() => {
         login({
           username: formData.username,
           password: formData.password,
           id: Math.random().toString(36).substring(2, 8)
         });
+        setUser({ username: formData.username })
         navigate('/');
       }, 1000);
     } catch (err) {
+      console.error(err);
       setError('Неверный email или пароль. Пожалуйста, попробуйте снова.');
     } finally {
       setIsLoading(false);

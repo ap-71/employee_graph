@@ -6,6 +6,7 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState({});
 
   useEffect(() => {
     const storedTokenData = localStorage.getItem('token_data');
@@ -42,16 +43,16 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('token_data');
   };
 
-  const value = {
+  return <AuthContext.Provider value={{
+    user,
+    setUser,
     token,
     loading,
     login,
     logout,
     register,
     isAuthenticated: !!token,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  }}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
