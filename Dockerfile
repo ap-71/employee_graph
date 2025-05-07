@@ -12,12 +12,9 @@ RUN apt-get update && apt-get install -y \
 COPY pyproject.toml .
 COPY uv.lock .
 
-# Install Python dependencies and set up virtual environment
+# Install Python dependencies globally
 RUN pip install --no-cache-dir uv && \
-    uv venv && \
-    . .venv/bin/activate && \
-    uv pip install --no-cache-dir -e . && \
-    ln -s /app/.venv/bin/uvicorn /usr/local/bin/uvicorn
+    uv pip install --system --no-cache-dir -e .
 
 # Copy application code
 COPY . .
