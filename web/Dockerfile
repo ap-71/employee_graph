@@ -1,4 +1,4 @@
-FROM node:20-alpine
+FROM node:20-alpine as builder
 
 WORKDIR /app
 
@@ -14,11 +14,14 @@ COPY . .
 # Build the application
 RUN npm run build
 
-# Install serve to run the application
-RUN npm install -g serve
+# Production stage
+FROM nginx:alpine
+
+# Copy built files from builder stage
+COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Expose port
-EXPOSE 5173
+EXPOSE 80
 
-# Start the application
-CMD ["serve", "-s", "dist", "-l", "5173"] 
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"] 
