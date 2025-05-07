@@ -1,4 +1,4 @@
-export const API_BASE_URL = 'http://localhost:8000';
+export const API_BASE_URL = '/api';
 
 export const token = () => {
     const accessToken = JSON.parse(localStorage.getItem('token_data'))?.access_token
