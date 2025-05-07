@@ -19,8 +19,8 @@ cd employee_graph
 ### Установка зависимостей
 1. Установите зависимости для бэкенда:
    ```bash
-   cd api
-   pip install -r requirements.txt
+   pip install uv
+   uv sync
    ```
 
 2. Установите зависимости для фронтенда:
