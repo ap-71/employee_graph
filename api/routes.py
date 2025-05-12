@@ -49,11 +49,19 @@ class RequestContext(NamedTuple):
     db: Session
     user: User
 
+class RequestPubContext(NamedTuple):
+    db: Session
+
 def get_context(
     db: Session = Depends(get_db),
     user: User = Depends(check_token)
 ) -> RequestContext:
     return RequestContext(db=db, user=user)
+
+def get_pub_context(
+    db: Session = Depends(get_db),
+) -> RequestContext:
+    return RequestPubContext(db=db)
 
 # ----------- Маршруты для получения количества объектов -----------
 
@@ -444,3 +452,7 @@ async def get_graph(ctx: RequestContext = Depends(get_context)):
         links.append(LinkSchema(id=f"ee-{e1}-{e2}", source=e1, target=e2))
 
     return GraphDataSchema(nodes=nodes, links=links)
+
+@app.get("/public/graph", response_model=GraphDataSchema, tags=["graph"])
+async def public_get_graph(ctx: RequestPubContext = Depends(get_pub_context)):
+    return await get_graph(ctx)

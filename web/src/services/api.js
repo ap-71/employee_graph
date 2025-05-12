@@ -84,8 +84,12 @@ export async function getCountPositions() {
 export async function getCountProjects() {
     return await getCounts("projects")
 }
-export async function getGraph() {
-    return await getData(`${API_BASE_URL}/graph`);
+export async function getGraph({ publicView } = {}) {
+    if( publicView ){
+        return await getData(`${API_BASE_URL}/public/graph`, false);
+    } else {
+        return await getData(`${API_BASE_URL}/graph`);
+    }
 }
 export async function getToken(data){
     const formData = new FormData()

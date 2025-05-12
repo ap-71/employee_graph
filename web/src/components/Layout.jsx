@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useLocation, Link } from 'wouter';
+import { useMemo, useState } from 'react';
+import { useLocation } from 'wouter';
 import { useAuth } from '../context/AuthContext';
 import {
   AppBar,
@@ -22,14 +22,10 @@ import { useTheme } from '@mui/material/styles';
 import {
   Menu as MenuIcon,
   Home as HomeIcon,
-  Badge as BadgeIcon,
   ScatterPlot as ScatterPlotIcon,
   ExitToApp as LogoutIcon,
   Login as LoginIcon,
   PersonAdd as RegisterIcon,
-  Business as BusinessIcon,
-  Work as WorkIcon,
-  AccountTree as AccountTreeIcon,
   ManageAccounts as ManageAccountsIcon
 } from '@mui/icons-material';
 
@@ -47,14 +43,14 @@ export default function Layout({ children }) {
 
   const menuItems = isAuthenticated
     ? [
-        { text: 'Главная', icon: <HomeIcon />, path: '/' },
-        { text: 'Граф', icon: <ScatterPlotIcon />, path: '/graph' },
-        { text: 'Управление', icon: <ManageAccountsIcon />, path: '/management' },
-      ]
+      { text: 'Главная', icon: <HomeIcon />, path: '/' },
+      { text: 'Граф', icon: <ScatterPlotIcon />, path: '/graph' },
+      { text: 'Управление', icon: <ManageAccountsIcon />, path: '/management' },
+    ]
     : [
-        { text: 'Вход', icon: <LoginIcon />, path: '/login' },
-        { text: 'Регистрация', icon: <RegisterIcon />, path: '/register' }
-      ];
+      { text: 'Вход', icon: <LoginIcon />, path: '/login' },
+      { text: 'Регистрация', icon: <RegisterIcon />, path: '/register' }
+    ];
 
   const drawer = (
     <>
@@ -104,21 +100,26 @@ export default function Layout({ children }) {
             <ListItemIcon>
               <LogoutIcon />
             </ListItemIcon>
-            <ListItemText primary="Выйти"/>
+            <ListItemText primary="Выйти" />
           </ListItem>
         )}
       </List>
     </>
   );
 
+  const isPublicRoute = useMemo(() => {
+    return location === '/public/graph'
+  }, [location])
+
   return (
     <>
-      <AppBar 
-        position="fixed" 
+      <AppBar
+        position="fixed"
         elevation={0}
         sx={{
           backdropFilter: 'blur(8px)',
-          backgroundColor: 'rgba(18, 18, 18, 0.8)'
+          backgroundColor: 'rgba(18, 18, 18, 0.8)',
+          display: isPublicRoute ? 'none': 'unset',
         }}
       >
         <Toolbar>

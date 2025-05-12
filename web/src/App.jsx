@@ -36,6 +36,9 @@ function App() {
                 <Graph />
               </ProtectedRoute>
             </Route>
+            <Route path="/public/graph">
+                <Graph publicView/>
+            </Route>
             <Route path="/management">
               <ProtectedRoute>
                 <Management />

@@ -11,7 +11,7 @@ const nodeTypes = {
     project: { color: '#e1e1e1', name: "Проект" }
 };
 
-export default function GraphComponent({ width = 800, height = 600 } = {}) {
+export default function GraphComponent({ width = 800, height = 600, publicView=false } = {}) {
     const fgRef = useRef();
     const [highlightNode, setHighlightNode] = useState(null);
     const [highlightNodes, setHighlightNodes] = useState(new Set());
@@ -33,7 +33,7 @@ export default function GraphComponent({ width = 800, height = 600 } = {}) {
     }, [])
 
     useEffect(() => {
-        getGraph().then(data => {
+        getGraph({ publicView }).then(data => {
             // Удаляем зафиксированные координаты, чтобы включилась физика
             const cleanedData = {
                 nodes: data.nodes.map(node => {

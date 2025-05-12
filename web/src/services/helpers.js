@@ -1,4 +1,4 @@
-export const API_BASE_URL = '/api';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 export const token = () => {
     const accessToken = JSON.parse(localStorage.getItem('token_data'))?.access_token
@@ -103,9 +103,9 @@ export async function assignRelation(url, body) {
     return await response.json();
 }
 
-export const getData = async (url) => {
+export const getData = async (url, useAuth=true) => {
     const response = await fetch(url, {
-        headers: { authorization: token() }
+        headers: useAuth ? { authorization: token() } : {}
     });
     
     if (!response.ok) {
