@@ -41,8 +41,11 @@ class CRUDBase(Generic[MODEL, SCHEMA_CREATE, SCHEMA_READ]):
 
         return obj
 
-    def get_all(self, db: Session, skip=0, limit=1000) -> list[MODEL]:
-        return db.query(self.model).offset(skip).limit(limit).all()
+    def get_all(self, db: Session, skip: int = 0, limit: int | None = None) -> list[MODEL]:
+        if limit is None:
+            return db.query(self.model).offset(skip).all()
+        else:
+            return db.query(self.model).offset(skip).limit(limit).all()
 
     def update(self, db: Session, obj_id: int, obj_in) -> MODEL:
         obj = self.get(db, obj_id)
