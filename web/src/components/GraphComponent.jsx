@@ -98,19 +98,21 @@ export default function GraphComponent({
     });
 
     graphData.links.forEach(({ source, target }) => {
-      const objSource = obj[source.id];
-      const objTarget = obj[target.id];
+      const objSource = obj[source.id || source];
+      const objTarget = obj[target.id || target];
 
+      // Если нода не найдена - пропускаем
       if (objSource === undefined || objTarget === undefined) {
         return;
       }
 
-      objSource.add(target.id);
-      objTarget.add(source.id);
+      // Добавляем соседей
+      objSource.add(target.id || target);
+      objTarget.add(source.id || source);
     });
 
     return obj;
-  }, [graphData]);
+  }, [graphData.nodes, graphData.links]);
 
   const handleTypeNodeClick = (typeNodeKey) => {
     setSelectedTypeNodes((prev) =>
