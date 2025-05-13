@@ -201,7 +201,6 @@ export default function GraphComponent({ width = 800, height = 600, publicView=f
                     step="10"
                     value={distance}
                     onChange={(e) => handleSetLinksDistance(Number(e.target.value))}
-                    style={{ }}
                 />
             </Stack>
             <Stack style={{ color: '#ccc', fontSize: 14 }}>
