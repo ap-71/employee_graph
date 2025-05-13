@@ -107,7 +107,7 @@ def create_department(data: DepartmentCreate, ctx: RequestContext = Depends(get_
 
 
 @app.get("/departments/", response_model=List[DepartmentRead], tags=["departments"])
-def get_departments(skip: int = 0, limit: int = 100, ctx: RequestContext = Depends(get_context)):
+def get_departments(skip: int = 0, limit: int = 250, ctx: RequestContext = Depends(get_context)):
     return department_crud.get_all(ctx.db, skip, limit)
 
 
@@ -142,7 +142,7 @@ def create_employee(data: EmployeeCreate, ctx: RequestContext = Depends(get_cont
 
 
 @app.get("/employee/", response_model=List[EmployeeRead], tags=["employee"])
-def get_employees(skip: int = 0, limit: int = 100, ctx: RequestContext = Depends(get_context)):
+def get_employees(skip: int = 0, limit: int = 250, ctx: RequestContext = Depends(get_context)):
     return employee_crud.get_all(ctx.db, skip, limit)
 
 
@@ -247,7 +247,7 @@ def create_position(data: PositionCreate, ctx: RequestContext = Depends(get_cont
 
 
 @app.get("/positions/", response_model=List[PositionRead], tags=["positions"])
-def get_positions(skip: int = 0, limit: int = 100, ctx: RequestContext = Depends(get_context)):
+def get_positions(skip: int = 0, limit: int = 250, ctx: RequestContext = Depends(get_context)):
     return position_crud.get_all(ctx.db, skip, limit)
 
 
@@ -315,7 +315,7 @@ def create_project(data: ProjectCreate, ctx: RequestContext = Depends(get_contex
 
 
 @app.get("/projects/", response_model=List[ProjectRead], tags=["projects"])
-def get_projects(skip: int = 0, limit: int = 100, ctx: RequestContext = Depends(get_context)):
+def get_projects(skip: int = 0, limit: int = 250, ctx: RequestContext = Depends(get_context)):
     return project_crud.get_all(ctx.db, skip, limit)
 
 

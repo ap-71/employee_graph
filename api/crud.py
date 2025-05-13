@@ -41,7 +41,7 @@ class CRUDBase(Generic[MODEL, SCHEMA_CREATE, SCHEMA_READ]):
 
         return obj
 
-    def get_all(self, db: Session, skip=0, limit=100) -> list[MODEL]:
+    def get_all(self, db: Session, skip=0, limit=1000) -> list[MODEL]:
         return db.query(self.model).offset(skip).limit(limit).all()
 
     def update(self, db: Session, obj_id: int, obj_in) -> MODEL:
