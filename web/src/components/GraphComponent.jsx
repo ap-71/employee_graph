@@ -18,8 +18,6 @@ const nodeTypes = {
 };
 
 export default function GraphComponent({
-  width = 800,
-  height = 600,
   publicView = false,
 } = {}) {
   const [windowSize, setWindowSize] = useState({
@@ -200,8 +198,8 @@ export default function GraphComponent({
       <ForceGraph2D
         ref={fgRef}
         graphData={graphData}
-        width={windowSize.width}
-        height={windowSize.height}
+        width={windowSize.width-12}
+        height={windowSize.height-12}
         nodeAutoColorBy="type"
         linkDirectionalParticles={2}
         linkDirectionalParticleWidth={1}
