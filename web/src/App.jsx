@@ -11,7 +11,7 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Management from './pages/Management';
-import Graph from './pages/Graph';
+import { Graph, GraphPublic } from './pages/Graph';
 
 
 function App() {
@@ -37,7 +37,7 @@ function App() {
               </ProtectedRoute>
             </Route>
             <Route path="/public/graph">
-                <Graph publicView/>
+                <GraphPublic/>
             </Route>
             <Route path="/management">
               <ProtectedRoute>

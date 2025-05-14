@@ -1,9 +1,10 @@
 import { Box, Typography } from "@mui/material";
 import 'reactflow/dist/style.css';
+import './GraphStyle.css';
 import GraphComponent from "../components/GraphComponent";
 import { useSearchParams } from "wouter";
 
-export default function Graph({ publicView=false } = {}) {
+export function Graph({ publicView=false } = {}) {
   const [searchParams] = useSearchParams();
   const headText = searchParams.get("headText") || "Граф";
 
@@ -13,6 +14,15 @@ export default function Graph({ publicView=false } = {}) {
         {headText}
       </Typography>
       <GraphComponent publicView={publicView}/>
+    </Box>
+  );
+} 
+
+export function GraphPublic() {
+
+  return ( 
+    <Box sx={{ flexGrow: 1 }}>
+      <GraphComponent publicView={true}/>
     </Box>
   );
 } 

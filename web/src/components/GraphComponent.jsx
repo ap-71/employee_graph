@@ -22,6 +22,11 @@ export default function GraphComponent({
   height = 600,
   publicView = false,
 } = {}) {
+  const [windowSize, setWindowSize] = useState({
+      width: window.innerWidth,
+      height: window.innerHeight,
+    });
+  
   const fgRef = useRef();
   const [selectedTypeNodes, setSelectedTypeNodes] = useState([]);
   const [highlightNode, setHighlightNode] = useState(null);
@@ -32,6 +37,30 @@ export default function GraphComponent({
   const [distance, setDistance] = useState(100); // расстояние между нодами
   const [nodeRadius, setNodeRadius] = useState(8); // размер ноды
   const [nodeLabelsShow, setNodeLabelsShow] = useState(false);
+  
+  useEffect(() => {
+    // Функция для обновления состояния размера окна
+    const handleResize = () => {
+      setWindowSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+
+    // Добавляем слушатель события resize
+    window.addEventListener('resize', handleResize);
+
+    // Убираем слушатель при размонтировании компонента
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+   useEffect(() => {
+    if (fgRef.current) {
+      fgRef.current.refresh?.(); // заставляет график перерисоваться
+    }
+  }, [windowSize]);
 
   const graphData = useMemo(() => {
     const ids = [];
@@ -153,7 +182,12 @@ export default function GraphComponent({
 
   if (loading) {
     return (
-      <Stack {...{ width, height }}>
+      <Stack style={{
+            position: "absolute", 
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)"
+      }}>
         <Loader />
       </Stack>
     );
@@ -161,13 +195,13 @@ export default function GraphComponent({
 
   setLinksDistance(distance);
 
-  return (
-    <Stack background="#1a1a1a" border="2px solid #202020">
+  return (<>
+    <Stack background="#1a1a1a" border="2px solid #202020" style={{ width: "100%", height: "100%", position: "absolute", left: 0, top: 0}}>
       <ForceGraph2D
         ref={fgRef}
         graphData={graphData}
-        width={width}
-        height={height}
+        width={windowSize.width}
+        height={windowSize.height}
         nodeAutoColorBy="type"
         linkDirectionalParticles={2}
         linkDirectionalParticleWidth={1}
@@ -215,66 +249,70 @@ export default function GraphComponent({
         onNodeClick={handleNodeClick}
         nodeLabel={(node) => `${node.name} (${node.type})`}
       />
-      <Stack direction="row" margin={2} style={{ color: "#ccc", fontSize: 14 }}>
-        <b>Типы узлов:</b> &nbsp;
-        {Object.entries(nodeTypes).map(([key, { color, name }]) => (
-          <span
-            key={key}
-            style={{
-              display: "inline-block",
-              marginRight: 16,
-              paddingLeft: 10,
-              borderLeft: `10px solid ${color}`,
-              cursor: "pointer",
-              opacity:
-                selectedTypeNodes.includes(key) ||
-                selectedTypeNodes.length === 0
-                  ? 1
-                  : 0.2,
-            }}
-            onClick={() => handleTypeNodeClick(key)}
-          >
-            {name}
-          </span>
-        ))}
+      <Stack style={{ position: "absolute",padding: 12, bottom: -2, backdropFilter: 'blur(8px)',
+          backgroundColor: 'rgba(18, 18, 18, 0.8)'}}>
+        <Stack direction="row" margin={2} style={{ color: "#ccc", fontSize: 14 }}>
+          <b>Типы узлов:</b> &nbsp;
+          {Object.entries(nodeTypes).map(([key, { color, name }]) => (
+            <span
+              key={key}
+              style={{
+                display: "inline-block",
+                marginRight: 16,
+                paddingLeft: 10,
+                borderLeft: `10px solid ${color}`,
+                cursor: "pointer",
+                opacity:
+                  selectedTypeNodes.includes(key) ||
+                  selectedTypeNodes.length === 0
+                    ? 1
+                    : 0.2,
+              }}
+              onClick={() => handleTypeNodeClick(key)}
+            >
+              {name}
+            </span>
+          ))}
+        </Stack>
+        <Stack direction="row" gap={4} margin={2}>
+          <Stack style={{ color: "#ccc", fontSize: 14 }}>
+            <label htmlFor="distance">
+              Расстояние между связанными узлами: {distance}px
+            </label>
+            <input
+              type="range"
+              id="distance"
+              min="50"
+              max="300"
+              step="10"
+              value={distance}
+              onChange={(e) => handleSetLinksDistance(Number(e.target.value))}
+            />
+          </Stack>
+          <Stack style={{ color: "#ccc", fontSize: 14 }}>
+            <label htmlFor="nodeRadius">Размер узла: {nodeRadius}px</label>
+            <input
+              type="range"
+              id="nodeRadius"
+              min="0"
+              max="30"
+              step="1"
+              value={nodeRadius}
+              onChange={(e) => setNodeRadius(Number(e.target.value))}
+              style={{ width: "100%", marginTop: 4 }}
+            />
+          </Stack>
+          <Stack style={{ color: "#ccc", fontSize: 14 }}>
+            <FormControlLabel
+              onChange={(e, value) => setNodeLabelsShow(value)}
+              control={<Checkbox checked={nodeLabelsShow} />}
+              label="Отображение надписей"
+              name="1"
+            />
+          </Stack>
+        </Stack>
       </Stack>
-      <Stack direction="row" gap={4} margin={2}>
-        <Stack style={{ color: "#ccc", fontSize: 14 }}>
-          <label htmlFor="distance">
-            Расстояние между связанными узлами: {distance}px
-          </label>
-          <input
-            type="range"
-            id="distance"
-            min="50"
-            max="300"
-            step="10"
-            value={distance}
-            onChange={(e) => handleSetLinksDistance(Number(e.target.value))}
-          />
-        </Stack>
-        <Stack style={{ color: "#ccc", fontSize: 14 }}>
-          <label htmlFor="nodeRadius">Размер узла: {nodeRadius}px</label>
-          <input
-            type="range"
-            id="nodeRadius"
-            min="0"
-            max="30"
-            step="1"
-            value={nodeRadius}
-            onChange={(e) => setNodeRadius(Number(e.target.value))}
-            style={{ width: "100%", marginTop: 4 }}
-          />
-        </Stack>
-        <Stack style={{ color: "#ccc", fontSize: 14 }}>
-          <FormControlLabel
-            onChange={(e, value) => setNodeLabelsShow(value)}
-            control={<Checkbox checked={nodeLabelsShow} />}
-            label="Отображение надписей"
-            name="1"
-          />
-        </Stack>
-      </Stack>
-    </Stack>
+     </Stack>
+    </>
   );
 }
