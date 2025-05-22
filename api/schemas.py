@@ -159,3 +159,33 @@ class LinkSchema(BaseModel):
 class GraphDataSchema(BaseModel):
     nodes: List[NodeSchema]
     links: List[LinkSchema]
+
+
+class ConfigSchemaBase(BaseModel):
+    name: str
+    description: str
+    key: str
+    value: str
+    user_id: int | None = None
+
+
+class ConfigSchemaCreate(ConfigSchemaBase):
+    pass
+
+
+class ConfigSchemaDelete(ConfigSchemaBase):
+    pass
+
+
+class ConfigSchemaRead(ConfigSchemaBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+
+class ConfigNodesSchema(BaseModel):
+    distance: int | None = None
+    node_radius: int | None = None
+    multiplier_node_size: int | None = None
+    node_labels_show: bool | None = None
