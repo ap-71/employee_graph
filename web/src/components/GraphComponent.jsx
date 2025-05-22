@@ -6,9 +6,9 @@ import React, {
   useMemo,
 } from "react";
 import ForceGraph2D from "react-force-graph-2d";
-import { getGraph } from "../services/api";
+import { getGraph, getNodesConfig, saveNodesConfig } from "../services/api";
 import { Loader } from "./Loader";
-import { Checkbox, FormControlLabel, Stack } from "@mui/material";
+import { Button, Checkbox, FormControlLabel, Stack } from "@mui/material";
 
 const nodeTypes = {
   employee: { type: "employee", color: "#1f78b4", name: "Сотрудник" }, // синий
@@ -16,6 +16,13 @@ const nodeTypes = {
   position: { type: "position", color: "#e31a1c", name: "Должность" }, // красный
   project: { type: "project", color: "#e1e1e1", name: "Проект" },
 };
+
+const defaultNodeConfig = {
+  distance: 100, // расстояние между нодами
+  nodeRadius: 8, // размер ноды
+  multiplierNodeSize: 1, // множитель размера ноды
+  nodeLabelsShow: false, // показывать ли названия нод
+}
 
 export default function GraphComponent({
   publicView = false,
@@ -32,9 +39,23 @@ export default function GraphComponent({
   const [highlightLinks, setHighlightLinks] = useState(new Set());
   const [graphDataRaw, setGraphDataRaw] = useState({ nodes: [], links: [] });
   const [loading, setLoading] = useState(true);
-  const [distance, setDistance] = useState(100); // расстояние между нодами
-  const [nodeRadius, setNodeRadius] = useState(8); // размер ноды
-  const [nodeLabelsShow, setNodeLabelsShow] = useState(false);
+  const [nodeConfig, setNodeConfig] = useState({});
+  const [configIsChenged, setConfigIsChenged] = useState(false);
+  
+  useEffect(() => {
+    getNodesConfig(!publicView).then((data) => {
+      setNodeConfig((prev) => ({
+        ...prev,
+        distance: data.distance ?? defaultNodeConfig.distance,
+        nodeRadius: data.node_radius ?? defaultNodeConfig.nodeRadius,
+        multiplierNodeSize: data.multiplier_node_size ?? defaultNodeConfig.multiplierNodeSize,
+        nodeLabelsShow: data.node_labels_show ?? defaultNodeConfig.nodeLabelsShow,
+      }));
+    }).catch((e) => {
+      console.debug("error => " + e);
+      setNodeConfig((prev) => ({...prev, ...defaultNodeConfig }));
+    });
+  }, [publicView]);
   
   useEffect(() => {
     // Функция для обновления состояния размера окна
@@ -91,7 +112,7 @@ export default function GraphComponent({
 
   const handleSetLinksDistance = useCallback((current) => {
     setLinksDistance(current);
-    setDistance(current);
+    setNodeConfig((prev) => ({...prev, distance: current }));
   }, []);
 
   useEffect(() => {
@@ -100,6 +121,7 @@ export default function GraphComponent({
         // Удаляем зафиксированные координаты, чтобы включилась физика
         const cleanedData = {
           nodes: data.nodes.map((node) => {
+            // eslint-disable-next-line no-unused-vars
             const { x, y, vx, vy, ...rest } = node;
             return rest;
           }),
@@ -177,7 +199,26 @@ export default function GraphComponent({
       setHighlightLinks(newHighlightLinks);
     }
   };
+  const getSizeByCountNeighbors = useCallback((node) => {
+    return (nodeNeighbors[node.id] || new Set()).size*nodeConfig.multiplierNodeSize || 1
+  }, [nodeConfig.multiplierNodeSize, nodeNeighbors]);
 
+  const handleSetNodeConfig = useCallback((key, value) => {
+    setNodeConfig((prev) => ({ ...prev, [key]: value }));
+    setConfigIsChenged(true);
+  }, []);
+
+  const handleSaveNodeConfig = useCallback(() => {
+    saveNodesConfig(nodeConfig, !publicView)
+      .then((data) => {
+        console.debug("Сохранено", data);
+        setConfigIsChenged(false);
+      })
+      .catch((e) => {
+        console.debug("error => " + e);
+      });
+  }, [nodeConfig, publicView]);
+  
   if (loading) {
     return (
       <Stack style={{
@@ -191,7 +232,7 @@ export default function GraphComponent({
     );
   }
 
-  setLinksDistance(distance);
+  setLinksDistance(nodeConfig.distance);
 
   return (<>
     <Stack background="#1a1a1a" border="2px solid #202020" style={{ width: "100%", height: "100%", position: "absolute", left: 0, top: 0}}>
@@ -204,7 +245,7 @@ export default function GraphComponent({
         linkDirectionalParticles={2}
         linkDirectionalParticleWidth={1}
         backgroundColor="#121212"
-        linkDistance={distance}
+        linkDistance={nodeConfig.distance}
         nodeCanvasObject={(node, ctx, globalScale) => {
           const label = node.name;
           const fontSize = 12 / globalScale;
@@ -221,24 +262,34 @@ export default function GraphComponent({
           // Цвет ноды по типу
           const color = nodeTypes[node.type]?.color || "gray";
 
+          const sizeByCountNeighbors =  getSizeByCountNeighbors(node)
           // Рисуем круг ноды
           ctx.beginPath();
           ctx.fillStyle = color;
           ctx.strokeStyle = "#aaa";
           ctx.lineWidth = 1;
-          ctx.arc(node.x, node.y, nodeRadius, 0, 2 * Math.PI, false);
+
+          ctx.arc(node.x, node.y, nodeConfig.nodeRadius+sizeByCountNeighbors, 0, 2 * Math.PI, false);
           ctx.fill();
           ctx.stroke();
 
           // Подпись у ноды
           ctx.fillStyle = "#ddd";
           ctx.fillText(
-            highlightNodes.has(node.id) || nodeLabelsShow ? label : "",
+            highlightNodes.has(node.id) || nodeConfig.nodeLabelsShow ? label : "",
             node.x + 10,
             node.y + 4
           );
 
           ctx.globalAlpha = 1;
+        }}
+        nodePointerAreaPaint={(node, color, ctx) => {
+          const sizeByCountNeighbors =  getSizeByCountNeighbors(node)
+
+          ctx.beginPath();
+          ctx.arc(node.x, node.y, nodeConfig.nodeRadius+sizeByCountNeighbors, 0, 2 * Math.PI);
+          ctx.fillStyle = color;
+          ctx.fill();
         }}
         linkWidth={(link) => (highlightLinks.has(link) ? 6 : 4)}
         linkColor={(link) => (highlightLinks.has(link) ? "#666" : "#222")}
@@ -275,7 +326,7 @@ export default function GraphComponent({
         <Stack direction="row" gap={4} margin={2}>
           <Stack style={{ color: "#ccc", fontSize: 14 }}>
             <label htmlFor="distance">
-              Расстояние между связанными узлами: {distance}px
+              Расстояние между связанными узлами: {nodeConfig.distance}px
             </label>
             <input
               type="range"
@@ -283,30 +334,46 @@ export default function GraphComponent({
               min="50"
               max="300"
               step="10"
-              value={distance}
-              onChange={(e) => handleSetLinksDistance(Number(e.target.value))}
+              value={nodeConfig.distance}
+              onChange={(e) => handleSetLinksDistance(Number(e.target.value))} //FIXME
             />
           </Stack>
           <Stack style={{ color: "#ccc", fontSize: 14 }}>
-            <label htmlFor="nodeRadius">Размер узла: {nodeRadius}px</label>
+            <label htmlFor="nodeRadius">Размер узла: {nodeConfig.nodeRadius}px</label>
             <input
               type="range"
               id="nodeRadius"
-              min="0"
-              max="30"
+              min="4"
+              max="24"
               step="1"
-              value={nodeRadius}
-              onChange={(e) => setNodeRadius(Number(e.target.value))}
+              value={nodeConfig.nodeRadius}
+              onChange={(e) => handleSetNodeConfig("nodeRadius", Number(e.target.value))}
+              style={{ width: "100%", marginTop: 4 }}
+            />
+          </Stack>
+          <Stack style={{ color: "#ccc", fontSize: 14 }}>
+            <label htmlFor="nodeRadius" title="Влияет на узлы со связями">Множитель размера узла: {nodeConfig.multiplierNodeSize}</label>
+            <input
+              type="range"
+              id="multiplierNodeSize"
+              min="0"
+              max="10"
+              step="1"
+              value={nodeConfig.multiplierNodeSize}
+              onChange={(e) => handleSetNodeConfig("multiplierNodeSize", Number(e.target.value))}
               style={{ width: "100%", marginTop: 4 }}
             />
           </Stack>
           <Stack style={{ color: "#ccc", fontSize: 14 }}>
             <FormControlLabel
-              onChange={(e, value) => setNodeLabelsShow(value)}
-              control={<Checkbox checked={nodeLabelsShow} />}
+              onChange={(e, value) => handleSetNodeConfig("nodeLabelsShow", value)}
+              control={<Checkbox checked={nodeConfig.nodeLabelsShow} />}
               label="Отображение надписей"
               name="1"
             />
+          </Stack>
+          <Stack style={{ color: "#ccc", fontSize: 14, display: configIsChenged ? "block" : "none" }}>
+            <Button variant="contained" color="success" onClick={handleSaveNodeConfig}>Сохранить изменения</Button>
           </Stack>
         </Stack>
       </Stack>
