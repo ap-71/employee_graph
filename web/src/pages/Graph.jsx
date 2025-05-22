@@ -18,7 +18,6 @@ export function Graph({ publicView=false } = {}) {
 } 
 
 export function GraphPublic() {
-
   return ( 
     <Box sx={{ flexGrow: 1 }}>
       <GraphComponent publicView={true}/>
