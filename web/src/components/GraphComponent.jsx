@@ -359,7 +359,7 @@ export default function GraphComponent({
               id="multiplierNodeSize"
               min="0"
               max="10"
-              step="1"
+              step="0.1"
               value={nodeConfig.multiplierNodeSize}
               onChange={(e) => handleSetNodeConfig("multiplierNodeSize", Number(e.target.value))}
               style={{ width: "100%", marginTop: 4 }}

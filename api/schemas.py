@@ -187,5 +187,5 @@ class ConfigSchemaRead(ConfigSchemaBase):
 class ConfigNodesSchema(BaseModel):
     distance: int | None = None
     node_radius: int | None = None
-    multiplier_node_size: int | None = None
+    multiplier_node_size: float | None = None
     node_labels_show: bool | None = None
