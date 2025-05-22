@@ -167,3 +167,16 @@ export async function createPositions (data){
 export async function deletePositions (id){
     return await deleteData(`${API_BASE_URL}/positions/${id}`);
 }
+export async function saveNodesConfig(data, useAuth=false){
+    const body = {
+        distance: data.distance,
+        node_radius: data.nodeRadius,
+        multiplier_node_size: data.multiplierNodeSize,
+        node_labels_show: data.nodeLabelsShow,
+    }
+
+    return await createData(`${API_BASE_URL}/config/nodes`, body, useAuth);
+}
+export const getNodesConfig = async (useAuth=false) => {
+    return await getData(`${API_BASE_URL}/config/nodes`, useAuth);
+};
