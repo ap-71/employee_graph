@@ -17,10 +17,11 @@ export const processingErrorStatus = (status) => {
     }
 
 }
-export async function createData(url, body) {
+export async function createData(url, body, useAuth=true) {
+    const headers = {'Content-Type': 'application/json'}
     const response = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', authorization: token() },
+        headers: useAuth ? { ...headers, authorization: token() } : headers,
         body: JSON.stringify(body)
     });
 
