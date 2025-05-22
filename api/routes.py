@@ -1,11 +1,10 @@
 from typing import List
 import uuid
-from fastapi import Depends, HTTPException
-from pydantic import BaseModel
+from fastapi import Depends, HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from api.db import get_db
-from api.auth import app, check_token
+from api.auth import app, check_token, oauth2_scheme
 from api.models import (
     User,
     employee_department,
@@ -14,6 +13,7 @@ from api.models import (
     employee_project,
 )
 from api.schemas import (
+    ConfigNodesSchema,
     DepartmentCreate,
     DepartmentRead,
     GraphDataSchema,
@@ -35,33 +35,37 @@ from api.schemas import (
     ProjectRead,
 )
 from api.crud import (
-    CRUDBase,
     department_crud,
     employee_crud,
     position_crud,
     project_crud,
+    config_crud,
 )
 
 
 from typing import NamedTuple
 
+
 class RequestContext(NamedTuple):
     db: Session
     user: User
 
+
 class RequestPubContext(NamedTuple):
     db: Session
 
+
 def get_context(
-    db: Session = Depends(get_db),
-    user: User = Depends(check_token)
+    db: Session = Depends(get_db), user: User = Depends(check_token)
 ) -> RequestContext:
     return RequestContext(db=db, user=user)
+
 
 def get_pub_context(
     db: Session = Depends(get_db),
 ) -> RequestContext:
     return RequestPubContext(db=db)
+
 
 # ----------- Маршруты для получения количества объектов -----------
 
@@ -102,12 +106,16 @@ def count_projects(ctx: RequestContext = Depends(get_context)):
 
 
 @app.post("/departments/", response_model=DepartmentRead, tags=["departments"])
-def create_department(data: DepartmentCreate, ctx: RequestContext = Depends(get_context)):
+def create_department(
+    data: DepartmentCreate, ctx: RequestContext = Depends(get_context)
+):
     return department_crud.create(ctx.db, data)
 
 
 @app.get("/departments/", response_model=List[DepartmentRead], tags=["departments"])
-def get_departments(skip: int = 0, limit: int = 250, ctx: RequestContext = Depends(get_context)):
+def get_departments(
+    skip: int = 0, limit: int = 250, ctx: RequestContext = Depends(get_context)
+):
     return department_crud.get_all(ctx.db, skip, limit)
 
 
@@ -120,7 +128,9 @@ def get_department(id: int, ctx: RequestContext = Depends(get_context)):
 
 
 @app.put("/departments/{id}", response_model=DepartmentRead, tags=["departments"])
-def update_department(id: int, data: DepartmentCreate, ctx: RequestContext = Depends(get_context)):
+def update_department(
+    id: int, data: DepartmentCreate, ctx: RequestContext = Depends(get_context)
+):
     return department_crud.update(ctx.db, id, data)
 
 
@@ -142,7 +152,9 @@ def create_employee(data: EmployeeCreate, ctx: RequestContext = Depends(get_cont
 
 
 @app.get("/employee/", response_model=List[EmployeeRead], tags=["employee"])
-def get_employees(skip: int = 0, limit: int = 250, ctx: RequestContext = Depends(get_context)):
+def get_employees(
+    skip: int = 0, limit: int = 250, ctx: RequestContext = Depends(get_context)
+):
     return employee_crud.get_all(ctx.db, skip, limit)
 
 
@@ -152,7 +164,9 @@ def get_employee(uuid: str, ctx: RequestContext = Depends(get_context)):
 
 
 @app.put("/employee/{uuid}", response_model=EmployeeRead, tags=["employee"])
-def update_employee(uuid: str, data: EmployeeCreate, ctx: RequestContext = Depends(get_context)):
+def update_employee(
+    uuid: str, data: EmployeeCreate, ctx: RequestContext = Depends(get_context)
+):
     return employee_crud.update(ctx.db, uuid, data)
 
 
@@ -172,7 +186,10 @@ def create_employee_department(
 ):
     department = department_crud.get(ctx.db, data.department_id)
     employee_crud.bind(
-        ctx.db, obj_id=data.employee_uuid, bind_attr_name="departments", bind_obj=department
+        ctx.db,
+        obj_id=data.employee_uuid,
+        bind_attr_name="departments",
+        bind_obj=department,
     )
 
     return {"detail": "Binded"}
@@ -247,7 +264,9 @@ def create_position(data: PositionCreate, ctx: RequestContext = Depends(get_cont
 
 
 @app.get("/positions/", response_model=List[PositionRead], tags=["positions"])
-def get_positions(skip: int = 0, limit: int = 250, ctx: RequestContext = Depends(get_context)):
+def get_positions(
+    skip: int = 0, limit: int = 250, ctx: RequestContext = Depends(get_context)
+):
     return position_crud.get_all(ctx.db, skip, limit)
 
 
@@ -260,7 +279,9 @@ def get_position(id: int, ctx: RequestContext = Depends(get_context)):
 
 
 @app.put("/positions/{id}", response_model=PositionRead, tags=["positions"])
-def update_position(id: int, data: PositionCreate, ctx: RequestContext = Depends(get_context)):
+def update_position(
+    id: int, data: PositionCreate, ctx: RequestContext = Depends(get_context)
+):
     return position_crud.update(ctx.db, id, data)
 
 
@@ -315,7 +336,9 @@ def create_project(data: ProjectCreate, ctx: RequestContext = Depends(get_contex
 
 
 @app.get("/projects/", response_model=List[ProjectRead], tags=["projects"])
-def get_projects(skip: int = 0, limit: int = 250, ctx: RequestContext = Depends(get_context)):
+def get_projects(
+    skip: int = 0, limit: int = 250, ctx: RequestContext = Depends(get_context)
+):
     return project_crud.get_all(ctx.db, skip, limit)
 
 
@@ -328,7 +351,9 @@ def get_project(id: int, ctx: RequestContext = Depends(get_context)):
 
 
 @app.put("/projects/{id}", response_model=ProjectRead, tags=["projects"])
-def update_project(id: int, data: ProjectCreate, ctx: RequestContext = Depends(get_context)):
+def update_project(
+    id: int, data: ProjectCreate, ctx: RequestContext = Depends(get_context)
+):
     return project_crud.update(ctx.db, id, data)
 
 
@@ -342,7 +367,9 @@ def delete_project(id: int, ctx: RequestContext = Depends(get_context)):
 
 
 @app.post("/employee_project/", tags=["employee"])
-def create_employee_project(data: EmployeeProjectCreate, ctx: RequestContext = Depends(get_context)):
+def create_employee_project(
+    data: EmployeeProjectCreate, ctx: RequestContext = Depends(get_context)
+):
     obj = project_crud.get(ctx.db, data.project_id)
     employee_crud.bind(
         ctx.db, obj_id=data.employee_uuid, bind_attr_name="projects", bind_obj=obj
@@ -364,7 +391,9 @@ def get_employee_project(ctx: RequestContext = Depends(get_context)):
 
 
 @app.delete("/employee_project/", tags=["employee"])
-def delete_employee_project(data: EmployeeProjectDelete, ctx: RequestContext = Depends(get_context)):
+def delete_employee_project(
+    data: EmployeeProjectDelete, ctx: RequestContext = Depends(get_context)
+):
     return employee_crud.delete_bind_project(
         ctx.db, uuid=data.employee_uuid, id=data.project_id
     )
@@ -383,10 +412,7 @@ async def get_graph(ctx: RequestContext = Depends(get_context)):
 
     # Добавляем узлы
     nodes.extend(
-        [
-            NodeSchema(id=e.uuid, name=e.fio, type="employee")
-            for e in employees
-        ]
+        [NodeSchema(id=e.uuid, name=e.fio, type="employee") for e in employees]
     )
     nodes.extend(
         [
@@ -400,9 +426,7 @@ async def get_graph(ctx: RequestContext = Depends(get_context)):
     )
     nodes.extend(
         [
-            NodeSchema(
-                id=f"position-{p.id}", name=p.value, type="position"
-            )
+            NodeSchema(id=f"position-{p.id}", name=p.value, type="position")
             for p in positions
         ]
     )
@@ -453,6 +477,71 @@ async def get_graph(ctx: RequestContext = Depends(get_context)):
 
     return GraphDataSchema(nodes=nodes, links=links)
 
+
 @app.get("/public/graph", response_model=GraphDataSchema, tags=["graph"])
 async def public_get_graph(ctx: RequestPubContext = Depends(get_pub_context)):
     return await get_graph(ctx)
+
+
+@app.post("/config/nodes", tags=["config"])
+async def update_config_nodes(
+    data: ConfigNodesSchema, request: Request, db: Session = Depends(get_db)
+):
+    try:
+        user = check_token(await oauth2_scheme(request), db)
+    except HTTPException:
+        user = None
+
+    user_id = user.id if user else None
+
+    data = [
+        dict(
+            name="nodes",
+            key="distance",
+            value=data.distance,
+        ),
+        dict(
+            name="nodes",
+            key="node_radius",
+            value=data.node_radius,
+        ),
+        dict(
+            name="nodes",
+            key="multiplier_node_size",
+            value=data.multiplier_node_size,
+        ),
+        dict(
+            name="nodes",
+            key="node_labels_show",
+            value=data.node_labels_show,
+        ),
+    ]
+
+    for item in data:
+        config_crud.update(db=db, user_id=user_id, **item)
+
+
+@app.get("/config/nodes", response_model=ConfigNodesSchema, tags=["config"])
+async def get_config_nodes(request: Request, db: Session = Depends(get_db)):
+    try:
+        user = check_token(await oauth2_scheme(request), db)
+    except HTTPException:
+        user = None
+
+    user_id = user.id if user else None
+
+    config = config_crud.get(db=db, name="nodes", key=None, user_id=user_id)
+
+    data = {}
+
+    for conf in config:
+        if conf.key == "node_labels_show":
+            data["node_labels_show"] = conf.value
+        elif conf.key == "distance":
+            data["distance"] = conf.value
+        elif conf.key == "node_radius":
+            data["node_radius"] = conf.value
+        elif conf.key == "multiplier_node_size":
+            data["multiplier_node_size"] = conf.value
+
+    return ConfigNodesSchema(**data)
