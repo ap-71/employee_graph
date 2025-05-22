@@ -113,6 +113,7 @@ export default function GraphComponent({
   const handleSetLinksDistance = useCallback((current) => {
     setLinksDistance(current);
     setNodeConfig((prev) => ({...prev, distance: current }));
+    setConfigIsChenged(true);
   }, []);
 
   useEffect(() => {
