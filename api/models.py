@@ -1,11 +1,22 @@
 from typing import List
-from sqlalchemy import Boolean, ForeignKey, Integer, String, Table, Column, UniqueConstraint
+from sqlalchemy import (
+    Boolean,
+    ForeignKey,
+    Integer,
+    String,
+    Table,
+    Column,
+    UniqueConstraint,
+    DateTime,
+    func,
+)
 from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped, relationship
 from api.db import engine
 
 
 class Base(DeclarativeBase):
     """Базовый класс для всех моделей"""
+
 
 employee_department = Table(
     "employee_department",
@@ -46,12 +57,13 @@ employee_project = Table(
 
 class User(Base):
     __tablename__ = "users"
-    
+
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     username: Mapped[str] = mapped_column(unique=True, nullable=False)
     hashed_password: Mapped[str] = mapped_column(unique=True, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    
+
+
 class Department(Base):
     __tablename__ = "departments"
 
@@ -103,3 +115,16 @@ class Project(Base):
     employees: Mapped[List["Employee"]] = relationship(
         "Employee", secondary=employee_project, back_populates=__tablename__
     )
+
+
+class Config(Base):
+    __tablename__ = "config"
+
+    id = mapped_column(Integer, primary_key=True, index=True)
+    name = mapped_column(String, nullable=False)
+    description = mapped_column(String, nullable=True)
+    key = mapped_column(String, nullable=False)
+    value = mapped_column(String, nullable=False)
+    is_active = mapped_column(Boolean, default=True, nullable=False)
+    user_id = mapped_column(Integer)
+    dt_create = mapped_column(DateTime, default=func.now(), nullable=False)
