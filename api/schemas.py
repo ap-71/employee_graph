@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List, Optional
 from pydantic import BaseModel
 
@@ -189,3 +190,65 @@ class ConfigNodesSchema(BaseModel):
     node_radius: int | None = None
     multiplier_node_size: float | None = None
     node_labels_show: bool | None = None
+
+class UserSchema(BaseModel):
+    id: int
+    username: str
+    is_active: bool
+
+
+class SectionCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+    user_id: int | None = None
+
+    class Config:
+        from_attributes = True
+        
+class SectionRead(BaseModel):
+    id: int
+    name: str
+    description: Optional[str] = None
+    dt_create: datetime | None = None
+    user: UserSchema | None = None
+
+    class Config:
+        from_attributes = True
+
+class NodeTypeCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+    user_id: int | None = None
+
+    class Config:
+        from_attributes = True
+        
+class NodeTypeRead(BaseModel):
+    id: int
+    name: str
+    description: Optional[str] = None
+    dt_create: datetime | None = None
+    user: UserSchema | None = None
+
+    class Config:
+        from_attributes = True
+
+class NodeCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+    type_id: int
+    user_id: int | None = None
+    section_id: int | None = None
+
+    class Config:
+        from_attributes = True
+        
+class NodeRead(BaseModel):
+    name: str
+    description: Optional[str] = None
+    type: NodeTypeRead
+    user: UserSchema | None = None
+    dt_create: datetime | None = None
+
+    class Config:
+        from_attributes = True
