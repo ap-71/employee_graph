@@ -1,18 +1,24 @@
 from typing import Generic, List, TypeVar
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import and_
 
 
 from .models import (
     Config,
     Department,
     Employee,
+    Node,
+    NodeType,
     Position,
     Project,
+    Section,
     employee_department,
     employee_position,
     employee_employee,
     employee_project,
+    section_node,
+    node_node,
 )
 from .schemas import (
     ConfigSchemaCreate,
@@ -21,10 +27,16 @@ from .schemas import (
     DepartmentRead,
     EmployeeCreate,
     EmployeeRead,
+    NodeCreate,
+    NodeRead,
+    NodeTypeCreate,
+    NodeTypeRead,
     PositionCreate,
     PositionRead,
     ProjectCreate,
     ProjectRead,
+    SectionCreate,
+    SectionRead,
 )
 
 MODEL = TypeVar("MODEL")
@@ -284,6 +296,98 @@ class CRUDConfig(CRUDBase[Config, ConfigSchemaCreate, ConfigSchemaRead]):
             return obj
 
 
+class CRUDSection(CRUDBase[Section, SectionCreate, SectionRead]):
+    def create(self, db: Session, obj_in: SectionCreate) -> MODEL:
+        current = (
+            db.query(self.model)
+            .filter(
+                self.model.name == obj_in.name, self.model.user_id == obj_in.user_id
+            )
+            .first()
+        )
+
+        if current:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Раздел с именем '{obj_in.name}' уже существует для пользователя {obj_in.user_id}.",
+            )
+
+        obj = self.model(**obj_in.model_dump())
+
+        db.add(obj)
+        db.commit()
+        db.refresh(obj)
+
+        return obj
+
+    def get_by_name(self, db: Session, name: str) -> MODEL | None:
+        return db.query(self.model).filter(self.model.name == name).first()
+
+    def get_by_user_id(self, db: Session, user_id: int) -> List[MODEL]:
+        return db.query(self.model).filter(self.model.user_id == user_id).all()
+
+
+class CRUDNodeType(CRUDBase[NodeType, NodeTypeCreate, NodeTypeRead]):
+    def get_by_name(self, db: Session, name: str) -> MODEL | None:
+        return db.query(self.model).filter(self.model.name == name).first()
+
+    def get_by_user_id(self, db: Session, user_id: int) -> List[MODEL]:
+        return db.query(self.model).filter(self.model.user_id == user_id).all()
+
+
+class CRUDNode(CRUDBase[Node, NodeCreate, NodeRead]):
+    def create(self, db: Session, obj_in) -> MODEL:
+        section_id = obj_in.section_id
+        
+        section = db.query(Section).filter(Section.id == section_id).first()
+        exists_node = db.query(Node).filter(
+            Node.name == obj_in.name,
+            Node.type_id == obj_in.type_id,
+            section_node.c.section_id == section_id,
+            section_node.c.node_id == Node.id,
+        ).first()
+        
+        if exists_node:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Node with name '{obj_in.name}' already exists in section {section_id}."
+            )
+        if not section:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Section with id {section_id} not found."
+            )
+        
+        obj = obj_in.dict()
+        del obj['section_id']
+        
+        node = Node(**obj)
+        node.section = section
+        
+        db.add(node)
+        db.commit()
+        db.refresh(node)
+
+        return node
+    
+    def get_by_id(self, db: Session, node_id: int) -> MODEL | None:
+        return db.query(self.model).filter(self.model.id == node_id).first()
+
+    def get_by_name(self, db: Session, name: str) -> MODEL | None:
+        return db.query(self.model).filter(self.model.name == name).first()
+
+    def get_by_user_id(self, db: Session, user_id: int) -> List[MODEL]:
+        return db.query(self.model).filter(self.model.user_id == user_id).all()
+
+    def get_by_section_id(self, db: Session, section_id: int) -> List[MODEL]:
+        nodes = db.query(Node).filter(
+            Node.id == section_node.c.node_id,
+            section_node.c.section_id == section_id,
+        ).all()
+
+        return nodes
+
+
 # ----------- CRUD объекты -----------
 
 department_crud = CRUDDepartment()
@@ -291,3 +395,6 @@ employee_crud = CRUDEmployee()
 position_crud = CRUDPosition()
 project_crud = CRUDProject()
 config_crud = CRUDConfig()
+section_crud = CRUDSection()
+node_type_crud = CRUDNodeType()
+node_crud = CRUDNode()
