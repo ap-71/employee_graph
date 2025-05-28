@@ -54,6 +54,22 @@ employee_project = Table(
     UniqueConstraint("employee_uuid", "project_id", name="unique_employee_project"),
 )
 
+section_node = Table(
+    "section_node",
+    Base.metadata,
+    Column("section_id", ForeignKey("sections.id"), nullable=False),
+    Column("node_id", ForeignKey("nodes.id"), nullable=False),
+    UniqueConstraint("section_id", "node_id", name="unique_section_node"),
+)
+
+node_node = Table(
+    "node_node",
+    Base.metadata,
+    Column("node1_id", ForeignKey("nodes.id"), nullable=False),
+    Column("node2_id", ForeignKey("nodes.id"), nullable=False),
+    UniqueConstraint("node1_id", "node2_id", name="unique_node_node"),
+)
+
 
 class User(Base):
     __tablename__ = "users"
@@ -62,6 +78,18 @@ class User(Base):
     username: Mapped[str] = mapped_column(unique=True, nullable=False)
     hashed_password: Mapped[str] = mapped_column(unique=True, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    dt_create: Mapped[DateTime] = mapped_column(DateTime, default=func.now())
+
+    sections: Mapped[List["Section"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
+    node_types: Mapped[List["NodeType"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
+
+    nodes: Mapped[List["Node"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
 
 
 class Department(Base):
@@ -128,3 +156,51 @@ class Config(Base):
     is_active = mapped_column(Boolean, default=True, nullable=False)
     user_id = mapped_column(Integer)
     dt_create = mapped_column(DateTime, default=func.now(), nullable=False)
+
+
+class Section(Base):
+    __tablename__ = "sections"
+
+    id = mapped_column(Integer, primary_key=True, index=True)
+    name = mapped_column(String, nullable=False)
+    description = mapped_column(String, nullable=True)
+    dt_create = mapped_column(DateTime, default=func.now(), nullable=False)
+
+    user_id = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
+    user: Mapped[User] = relationship("User", back_populates="sections")
+
+    nodes: Mapped[List["Node"]] = relationship(
+        secondary=section_node, back_populates="section"
+    )
+
+
+class NodeType(Base):
+    __tablename__ = "node_types"
+
+    id = mapped_column(Integer, primary_key=True, index=True)
+    name = mapped_column(String, nullable=False)
+    description = mapped_column(String, nullable=True)
+    dt_create = mapped_column(DateTime, default=func.now(), nullable=False)
+    user_id = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
+    user: Mapped[User] = relationship("User", back_populates="node_types")
+    nodes: Mapped[List["Node"]] = relationship(
+        back_populates="type", cascade="all, delete-orphan"
+    )
+
+
+class Node(Base):
+    __tablename__ = "nodes"
+
+    id = mapped_column(Integer, primary_key=True, index=True)
+    name = mapped_column(String, nullable=False)
+    description = mapped_column(String, nullable=True)
+    type_id = mapped_column(Integer, ForeignKey("node_types.id"), nullable=False)
+    dt_create = mapped_column(DateTime, default=func.now(), nullable=False)
+
+    user_id = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
+    user: Mapped[User] = relationship("User", back_populates="nodes")
+
+    section: Mapped[Section] = relationship(
+        "Section", secondary=section_node, back_populates="nodes"
+    )
+    type: Mapped[NodeType] = relationship("NodeType", back_populates="nodes")
