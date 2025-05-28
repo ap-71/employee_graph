@@ -28,11 +28,17 @@ from api.schemas import (
     EmployeeProjectCreate,
     EmployeeProjectDelete,
     EmployeeRead,
+    NodeCreate,
+    NodeRead,
     NodeSchema,
+    NodeTypeCreate,
+    NodeTypeRead,
     PositionCreate,
     PositionRead,
     ProjectCreate,
     ProjectRead,
+    SectionCreate,
+    SectionRead,
 )
 from api.crud import (
     department_crud,
@@ -40,6 +46,9 @@ from api.crud import (
     position_crud,
     project_crud,
     config_crud,
+    section_crud,
+    node_type_crud,
+    node_crud,
 )
 
 
@@ -545,3 +554,160 @@ async def get_config_nodes(request: Request, db: Session = Depends(get_db)):
             data["multiplier_node_size"] = conf.value
 
     return ConfigNodesSchema(**data)
+
+
+# ----------- Маршруты для /sections -----------
+
+
+@app.post("/sections/", tags=["sections"])
+def create_section(data: SectionCreate, ctx: RequestContext = Depends(get_context)):
+    data.user_id = ctx.user.id  # Устанавливаем ID пользователя из контекста
+    
+    section_crud.create(ctx.db, data)
+
+
+@app.get("/sections/", response_model=List[SectionRead], tags=["sections"])
+def get_sections(
+    skip: int = 0, limit: int = 250, ctx: RequestContext = Depends(get_context)
+):
+    return section_crud.get_all(ctx.db, skip, limit)
+
+
+@app.get("/sections/{id}", response_model=SectionRead, tags=["sections"])
+def get_section(id: int, ctx: RequestContext = Depends(get_context)):
+    return section_crud.get(ctx.db, id)
+
+
+@app.get("/sections/by-name/{name}", response_model=SectionRead, tags=["sections"])
+def get_section_by_name(name: str, ctx: RequestContext = Depends(get_context)):
+    section = section_crud.get_by_name(ctx.db, name)
+    if not section:
+        raise HTTPException(status_code=404, detail="Section not found")
+    return section
+
+
+@app.get(
+    "/sections/by-user/{user_id}", response_model=List[SectionRead], tags=["sections"]
+)
+def get_sections_by_user(user_id: int, ctx: RequestContext = Depends(get_context)):
+    return section_crud.get_by_user_id(ctx.db, user_id)
+
+
+@app.put("/sections/{id}", response_model=SectionRead, tags=["sections"])
+def update_section(
+    id: int, data: SectionCreate, ctx: RequestContext = Depends(get_context)
+):
+    return section_crud.update(ctx.db, id, data)
+
+
+@app.delete("/sections/{id}", tags=["sections"])
+def delete_section(id: int, ctx: RequestContext = Depends(get_context)):
+    section_crud.delete(ctx.db, id)
+    return {"detail": "Deleted"}
+
+
+# ----------- Маршруты для /node-types -----------
+
+
+@app.post("/node-types/", response_model=NodeTypeRead, tags=["node-types"])
+def create_node_type(data: NodeTypeCreate, ctx: RequestContext = Depends(get_context)):
+    return node_type_crud.create(ctx.db, data)
+
+
+@app.get("/node-types/", response_model=List[NodeTypeRead], tags=["node-types"])
+def get_node_types(
+    skip: int = 0, limit: int = 250, ctx: RequestContext = Depends(get_context)
+):
+    return node_type_crud.get_all(ctx.db, skip, limit)
+
+
+@app.get("/node-types/{id}", response_model=NodeTypeRead, tags=["node-types"])
+def get_node_type(id: int, ctx: RequestContext = Depends(get_context)):
+    return node_type_crud.get(ctx.db, id)
+
+
+@app.get("/node-types/by-name/{name}", response_model=NodeTypeRead, tags=["node-types"])
+def get_node_type_by_name(name: str, ctx: RequestContext = Depends(get_context)):
+    node_type = node_type_crud.get_by_name(ctx.db, name)
+    if not node_type:
+        raise HTTPException(status_code=404, detail="Node type not found")
+    return node_type
+
+
+@app.get(
+    "/node-types/by-user/{user_id}",
+    response_model=List[NodeTypeRead],
+    tags=["node-types"],
+)
+def get_node_types_by_user(user_id: int, ctx: RequestContext = Depends(get_context)):
+    return node_type_crud.get_by_user_id(ctx.db, user_id)
+
+
+@app.put("/node-types/{id}", response_model=NodeTypeRead, tags=["node-types"])
+def update_node_type(
+    id: int, data: NodeTypeCreate, ctx: RequestContext = Depends(get_context)
+):
+    return node_type_crud.update(ctx.db, id, data)
+
+
+@app.delete("/node-types/{id}", tags=["node-types"])
+def delete_node_type(id: int, ctx: RequestContext = Depends(get_context)):
+    node_type_crud.delete(ctx.db, id)
+    return {"detail": "Deleted"}
+
+
+# ----------- Маршруты для /nodes -----------
+
+
+@app.post("/nodes/", response_model=NodeRead, tags=["nodes"])
+def create_node(data: NodeCreate, ctx: RequestContext = Depends(get_context)):
+    return node_crud.create(ctx.db, data)
+
+
+@app.get("/nodes/", response_model=List[NodeRead], tags=["nodes"])
+def get_nodes(
+    skip: int = 0, limit: int = 250, ctx: RequestContext = Depends(get_context)
+):
+    return node_crud.get_all(ctx.db, skip, limit)
+
+
+@app.get("/nodes/{id}", response_model=NodeRead, tags=["nodes"])
+def get_node(id: int, ctx: RequestContext = Depends(get_context)):
+    return node_crud.get(ctx.db, id)
+
+
+@app.get("/nodes/by-id/{node_id}", response_model=NodeRead, tags=["nodes"])
+def get_node_by_id(node_id: int, ctx: RequestContext = Depends(get_context)):
+    node = node_crud.get_by_id(ctx.db, node_id)
+    if not node:
+        raise HTTPException(status_code=404, detail="Node not found")
+    return node
+
+
+@app.get("/nodes/by-name/{name}", response_model=NodeRead, tags=["nodes"])
+def get_node_by_name(name: str, ctx: RequestContext = Depends(get_context)):
+    node = node_crud.get_by_name(ctx.db, name)
+    if not node:
+        raise HTTPException(status_code=404, detail="Node not found")
+    return node
+
+
+@app.get("/nodes/by-user/{user_id}", response_model=List[NodeRead], tags=["nodes"])
+def get_nodes_by_user(user_id: int, ctx: RequestContext = Depends(get_context)):
+    return node_crud.get_by_user_id(ctx.db, user_id)
+
+
+@app.get("/nodes/by-section/{section_id}", response_model=List[NodeRead], tags=["nodes"])
+def get_nodes_by_user(section_id: int, ctx: RequestContext = Depends(get_context)):
+    return node_crud.get_by_section_id(ctx.db, section_id)
+
+
+@app.put("/nodes/{id}", response_model=NodeRead, tags=["nodes"])
+def update_node(id: int, data: NodeCreate, ctx: RequestContext = Depends(get_context)):
+    return node_crud.update(ctx.db, id, data)
+
+
+@app.delete("/nodes/{id}", tags=["nodes"])
+def delete_node(id: int, ctx: RequestContext = Depends(get_context)):
+    node_crud.delete(ctx.db, id)
+    return {"detail": "Deleted"}
