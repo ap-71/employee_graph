@@ -180,3 +180,25 @@ export async function saveNodesConfig(data, useAuth=false){
 export const getNodesConfig = async (useAuth=false) => {
     return await getData(`${API_BASE_URL}/config/nodes`, useAuth);
 };
+
+export const getSections = async () => {
+    return await getData(`${API_BASE_URL}/sections/`);
+}
+export const getSectionById = async ({ sectionId }) => {
+    return await getData(`${API_BASE_URL}/sections/${sectionId}`);
+}
+export const createSection = async (sectionData) => {
+    return await createData(`${API_BASE_URL}/sections/`, sectionData);
+}
+export const getNodesBySection = async ({ sectionId }) => {
+    return await getData(`${API_BASE_URL}/nodes/by-section/${sectionId}`);
+}
+export const createNode = async (nodeData) => {
+    return await createData(`${API_BASE_URL}/nodes/`, nodeData);
+}
+export const getNodeTypes = async () => {
+    return await getData(`${API_BASE_URL}/node-types/`);
+}
+export const createNodeType = async (nodeTypeData) => {
+    return await createData(`${API_BASE_URL}/node-types/`, nodeTypeData);
+}
