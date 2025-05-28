@@ -1,18 +1,18 @@
-import { Route, Switch } from 'wouter';
-import { ThemeProvider, CssBaseline } from '@mui/material';
-import theme from './theme';
-import { AuthProvider } from './context/AuthContext';
-import Layout from './components/Layout';
-import ProtectedRoute from './components/ProtectedRoute';
-import PublicRoute from './components/PublicRoute';
+import { Route, Switch } from "wouter";
+import { ThemeProvider, CssBaseline } from "@mui/material";
+import theme from "./theme";
+import { AuthProvider } from "./context/AuthContext";
+import Layout from "./components/Layout";
+import ProtectedRoute from "./components/ProtectedRoute";
+import PublicRoute from "./components/PublicRoute";
 
 // Pages
-import Home from './pages/Home';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Management from './pages/Management';
-import { Graph, GraphPublic } from './pages/Graph';
-
+import Home from "./pages/Home";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Management from "./pages/Management";
+import { Graph, GraphPublic } from "./pages/Graph";
+import { ConcretSection } from "./pages/Section";
 
 function App() {
   return (
@@ -37,12 +37,19 @@ function App() {
               </ProtectedRoute>
             </Route>
             <Route path="/public/graph">
-                <GraphPublic/>
+              <GraphPublic />
             </Route>
             <Route path="/management">
               <ProtectedRoute>
                 <Management />
               </ProtectedRoute>
+            </Route>
+            <Route path="/management/sections/:name_or_id">
+              {(params) => (
+                <ProtectedRoute>
+                  <ConcretSection sectionId={params.name_or_id} />
+                </ProtectedRoute>
+              )}
             </Route>
             <Route path="/">
               <ProtectedRoute>
