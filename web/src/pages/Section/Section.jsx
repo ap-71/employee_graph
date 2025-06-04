@@ -1,0 +1,357 @@
+import { Button, IconButton, Stack, Typography } from "@mui/material";
+import { useCallback, useEffect, useState } from "react";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import AddIcon from "@mui/icons-material/Add";
+import LinkIcon from "@mui/icons-material/Link";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import {
+  getNodeTypesBySection,
+  getSectionById,
+  getSections,
+} from "../../services/api";
+import Employee from "../Employee";
+import Departments from "../Departments";
+import Positions from "../Positions";
+import Projects from "../Projects";
+import { useLocation } from "wouter";
+import {
+  BasicDialog,
+  DialogAddNode,
+  DialogAddNodeLink,
+  DialogAddNodeType,
+  DialogAddSection,
+} from "./Dialogs";
+import { BasicTable } from "../Table";
+
+export const Section = ({ name = "Разделы", buttonName } = {}) => {
+  const [, navigate] = useLocation();
+  const [sections, setSections] = useState([]);
+  const [openCreateSection, setOpenCreateSection] = useState(false);
+
+  const handleLoadSections = useCallback(() => {
+    getSections()
+      .then((sections) => {
+        if (sections.length === 0) {
+          console.warn("No sections found");
+        } else {
+          setSections(sections);
+        }
+      })
+      .catch((error) => {
+        console.error(`Error fetching sections: ${error.message}`);
+      });
+  }, []);
+
+  useEffect(() => {
+    handleLoadSections();
+  }, [handleLoadSections]);
+
+  return (
+    <Stack sx={{ p: 2, width: "50vw" }}>
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        sx={{ mb: 2, width: "100%" }}
+      >
+        <Typography variant="h4">{name}</Typography>
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<AddIcon />}
+          onClick={() => setOpenCreateSection(true)}
+        >
+          {buttonName || "Добавить раздел"}
+        </Button>
+      </Stack>
+
+      <Stack spacing={2} sx={{ mb: 2 }}>
+        <Button
+          color="inherit"
+          onClick={() => navigate(`/management/sections/st_0`)}
+          sx={{
+            transition: "color 0.2s",
+            textTransform: "none",
+            alignItems: "flex-start",
+            justifyContent: "flex-start",
+            "&:hover": {
+              color: "primary.main",
+            },
+          }}
+        >
+          Сотрудники, отделы, должности и проекты
+        </Button>
+      </Stack>
+      {sections.length > 0 && (
+        <Stack spacing={2} sx={{ mb: 2 }}>
+          {sections.map((section) => (
+            <Button
+              key={section.id}
+              color="inherit"
+              onClick={() => navigate(`/management/sections/${section.id}`)}
+              sx={{
+                transition: "color 0.2s",
+                textTransform: "none",
+                alignItems: "flex-start",
+                justifyContent: "flex-start",
+                "&:hover": {
+                  color: "primary.main",
+                },
+              }}
+            >
+              {section.description || section.name || "Неизвестно"}
+            </Button>
+          ))}
+        </Stack>
+      )}
+
+      <DialogAddSection
+        openDialog={openCreateSection}
+        onCloseDialog={() => setOpenCreateSection(false)}
+        onSubmit={() => handleLoadSections()}
+      />
+    </Stack>
+  );
+};
+
+const useOpenDialog = () => {
+  const [dialogData, setDialogData] = useState(null);
+  const [state, setState] = useState({
+    open: null,
+    addNode: "openAddNode",
+    addNodeType: "openAddNodeType",
+    deleteNode: "openDeleteNode",
+    linkNode: "openLinkNode",
+  });
+
+  const handleChangeState = {
+    openAddNode: (data) => {
+      setState((prev) => ({ ...prev, open: state.addNode }));
+      setDialogData(data)
+    },
+    openAddNodeType: (data) => {
+      setState((prev) => ({ ...prev, open: state.addNodeType }));
+      setDialogData(data)
+    },
+    openDeleteNode: (data) => {
+      setState((prev) => ({ ...prev, open: state.deleteNode }));
+      setDialogData(data)
+    },
+    openLinkNode: (data) => {
+      setState((prev) => ({ ...prev, open: state.linkNode }));
+      setDialogData(data)
+    },
+    reset: () => {
+      setState((prev) => ({ ...prev, open: null }));
+      setDialogData(null)
+    },
+  };
+
+  return [state, handleChangeState, dialogData];
+};
+export const ConcretSection = ({ sectionId }) => {
+  const [openDialog, openDialogActions, dialogData] = useOpenDialog();
+  const [selectedNodeType, setSelectedNodeType] = useState({});
+  const [sectionData, setSectionData] = useState({});
+  const [nodeTypes, setNodeTypes] = useState([]);
+
+  const loadSectionData = useCallback(() => {
+    getSectionById({ sectionId })
+      .then((section) => {
+        if (!section) {
+          console.warn(`Section with id ${sectionId} not found`);
+          return;
+        }
+        setSectionData(section);
+      })
+      .catch((error) => {
+        console.error(`Error fetching section data: ${error.message}`);
+      });
+  }, [sectionId]);
+
+  const handleOpenDialogNodeAdd = useCallback(
+    (nodeType) => {
+      openDialogActions.openAddNode();
+      setSelectedNodeType(nodeType);
+    },
+    [openDialogActions]
+  );
+
+  const handleOpenRelationsDialog = (item) => {
+    openDialogActions.openLinkNode(item);
+  };
+
+  const handleOpenDeleteDialog = (item) => {
+    openDialogActions.openDeleteNode(item);
+  };
+
+  const loadNodeTypes = useCallback(() => {
+    getNodeTypesBySection({ sectionId })
+      .then((types) => {
+        if (types.length === 0) {
+          console.warn("No node types found");
+        } else {
+          setNodeTypes(types);
+        }
+      })
+      .catch((error) => {
+        console.error(`Error fetching node types: ${error.message}`);
+      });
+  }, [sectionId]);
+
+  const handleFormSubmit = useCallback(() => {
+    loadNodeTypes();
+  }, [loadNodeTypes]);
+
+  useEffect(() => {
+    if (sectionId === "st_0") {
+      return;
+    }
+    // Загружаем узлы при монтировании компонента
+    loadNodeTypes();
+    loadSectionData();
+  }, [loadNodeTypes, loadSectionData, sectionId]);
+
+  if (sectionId === "st_0") {
+    return (
+      <Stack sx={{ p: 2, width: "50vw" }}>
+        <Employee />
+        <Departments />
+        <Positions />
+        <Projects />
+      </Stack>
+    );
+  }
+
+  return (
+    <Stack sx={{ p: 2, width: "50vw" }}>
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        spacing={2}
+        sx={{ mb: 2 }}
+      >
+        <Typography
+          variant="h4"
+          overflow="hidden"
+          textOverflow="ellipsis"
+          whiteSpace="nowrap"
+        >
+          Раздел:{" "}
+          {sectionData?.description || sectionData?.name || "Неизвестно"}
+        </Typography>
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<AddIcon />}
+          onClick={openDialogActions.openAddNodeType}
+        >
+          Добавить тип
+        </Button>
+      </Stack>
+      {Object.keys(nodeTypes).length === 0 && (
+        <Typography variant="body1">Здесь пока еще ничего нет.</Typography>
+      )}
+      {nodeTypes.map((nodeType) => {
+        return (
+          <Stack key={nodeType.id}>
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+              sx={{ mb: 1 }}
+            >
+              <Typography variant="h5">
+                {nodeType.description || nodeType.name}
+              </Typography>
+              <Stack direction="row" spacing={1}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => handleOpenDialogNodeAdd(nodeType)}
+                >
+                  <AddIcon />
+                </Button>
+                <Button
+                  variant="contained"
+                  color="error"
+                  onClick={() => alert("Удаление типа узлов не реализовано")}
+                >
+                  <DeleteIcon />
+                </Button>
+              </Stack>
+            </Stack>
+            <Stack direction="column" sx={{ mb: 2 }}>
+              <BasicTable
+                rows={nodeType?.nodes?.map((item) => {
+                  return {
+                    name: item.name,
+                    description: item.description,
+                    actions: (
+                      <>
+                        {/* <IconButton color="primary" onClick={() => handleOpenEditForm(item)} aria-label="edit">
+                        <EditIcon />
+                      </IconButton> */}
+                        <IconButton
+                          color="secondary"
+                          onClick={() => handleOpenRelationsDialog(item)}
+                          aria-label="manage relations"
+                        >
+                          <LinkIcon />
+                        </IconButton>
+                        <IconButton
+                          color="error"
+                          onClick={() => handleOpenDeleteDialog(item)}
+                          aria-label="delete"
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+
+                        {/* <IconButton color="info" onClick={() => handleOpenViewRelations(item)} aria-label="view relations">
+                        <VisibilityIcon />
+                      </IconButton> */}
+                      </>
+                    ),
+                  };
+                })}
+                cols={[
+                  { field: "name", headerName: "Имя" },
+                  { field: "description", headerName: "Описание" },
+                  { field: "actions", headerName: "Действия", align: "right" },
+                ]}
+              />
+            </Stack>
+          </Stack>
+        );
+      })}
+
+      <DialogAddNode
+        openDialog={openDialog.open === openDialog.addNode}
+        onCloseDialog={openDialogActions.reset}
+        onSubmit={handleFormSubmit}
+        sectionId={sectionId}
+        nodeType={selectedNodeType}
+      />
+
+      {/* Добавление типа */}
+      <DialogAddNodeType
+        openDialog={openDialog.open === openDialog.addNodeType}
+        onCloseDialog={openDialogActions.reset}
+        onSubmit={handleFormSubmit}
+        sectionId={sectionId}
+      />
+
+      {/* Удаление узла */}
+
+      {/* Управление связями узла */}
+      <DialogAddNodeLink
+        openDialog={openDialog.open === openDialog.linkNode}
+        onCloseDialog={openDialogActions.reset}
+        onSubmit={handleFormSubmit}
+        sectionId={sectionId}
+        node={dialogData}
+        nodeTypes={nodeTypes}
+      />
+    </Stack>
+  );
+};

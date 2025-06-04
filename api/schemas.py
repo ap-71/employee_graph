@@ -219,6 +219,8 @@ class NodeTypeCreate(BaseModel):
     name: str
     description: Optional[str] = None
     user_id: int | None = None
+    section_id: int
+    user_id: int | None = None
 
     class Config:
         from_attributes = True
@@ -229,6 +231,7 @@ class NodeTypeRead(BaseModel):
     description: Optional[str] = None
     dt_create: datetime | None = None
     user: UserSchema | None = None
+    nodes: List['NodeRead'] = []
 
     class Config:
         from_attributes = True
@@ -244,11 +247,16 @@ class NodeCreate(BaseModel):
         from_attributes = True
         
 class NodeRead(BaseModel):
+    id: int
     name: str
     description: Optional[str] = None
-    type: NodeTypeRead
     user: UserSchema | None = None
     dt_create: datetime | None = None
 
     class Config:
         from_attributes = True
+
+class NodeLink(BaseModel):
+    node1_id: int
+    node2_id: int
+    user_id: int | None = None

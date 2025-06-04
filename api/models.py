@@ -67,6 +67,7 @@ node_node = Table(
     Base.metadata,
     Column("node1_id", ForeignKey("nodes.id"), nullable=False),
     Column("node2_id", ForeignKey("nodes.id"), nullable=False),
+    Column("user_id", ForeignKey("users.id"), nullable=True),
     UniqueConstraint("node1_id", "node2_id", name="unique_node_node"),
 )
 
@@ -78,7 +79,7 @@ class User(Base):
     username: Mapped[str] = mapped_column(unique=True, nullable=False)
     hashed_password: Mapped[str] = mapped_column(unique=True, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    dt_create: Mapped[DateTime] = mapped_column(DateTime, default=func.now())
+    dt_create: Mapped[DateTime] = mapped_column(DateTime, default=func.now(), nullable=True)
 
     sections: Mapped[List["Section"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
@@ -172,6 +173,9 @@ class Section(Base):
     nodes: Mapped[List["Node"]] = relationship(
         secondary=section_node, back_populates="section"
     )
+    node_types: Mapped[List["NodeType"]] = relationship(
+        "NodeType", back_populates="section", cascade="all, delete-orphan"
+    )
 
 
 class NodeType(Base):
@@ -181,10 +185,14 @@ class NodeType(Base):
     name = mapped_column(String, nullable=False)
     description = mapped_column(String, nullable=True)
     dt_create = mapped_column(DateTime, default=func.now(), nullable=False)
+    section_id = mapped_column(Integer, ForeignKey("sections.id"), nullable=False)
     user_id = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
     user: Mapped[User] = relationship("User", back_populates="node_types")
     nodes: Mapped[List["Node"]] = relationship(
         back_populates="type", cascade="all, delete-orphan"
+    )
+    section: Mapped[Section] = relationship(
+        "Section", back_populates="node_types"
     )
 
 

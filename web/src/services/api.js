@@ -199,6 +199,13 @@ export const createNode = async (nodeData) => {
 export const getNodeTypes = async () => {
     return await getData(`${API_BASE_URL}/node-types/`);
 }
+export const getNodeTypesBySection = async ({ sectionId }) => {
+    return await getData(`${API_BASE_URL}/node-types/by-section/${sectionId}`);
+}
 export const createNodeType = async (nodeTypeData) => {
     return await createData(`${API_BASE_URL}/node-types/`, nodeTypeData);
+}
+
+export const linkNodes = async (nodeId1, nodeId2) => {
+    return await createData(`${API_BASE_URL}/nodes/link`, {node1_id: nodeId1, node2_id: nodeId2});
 }

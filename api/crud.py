@@ -1,7 +1,7 @@
 from typing import Generic, List, TypeVar
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 
 
 from .models import (
@@ -28,6 +28,7 @@ from .schemas import (
     EmployeeCreate,
     EmployeeRead,
     NodeCreate,
+    NodeLink,
     NodeRead,
     NodeTypeCreate,
     NodeTypeRead,
@@ -334,42 +335,48 @@ class CRUDNodeType(CRUDBase[NodeType, NodeTypeCreate, NodeTypeRead]):
     def get_by_user_id(self, db: Session, user_id: int) -> List[MODEL]:
         return db.query(self.model).filter(self.model.user_id == user_id).all()
 
+    def get_by_section_id(self, db: Session, section_id: int) -> List[MODEL]:
+        return db.query(self.model).filter(self.model.section_id == section_id).all()
+
 
 class CRUDNode(CRUDBase[Node, NodeCreate, NodeRead]):
     def create(self, db: Session, obj_in) -> MODEL:
         section_id = obj_in.section_id
-        
+
         section = db.query(Section).filter(Section.id == section_id).first()
-        exists_node = db.query(Node).filter(
-            Node.name == obj_in.name,
-            Node.type_id == obj_in.type_id,
-            section_node.c.section_id == section_id,
-            section_node.c.node_id == Node.id,
-        ).first()
-        
+        exists_node = (
+            db.query(Node)
+            .filter(
+                Node.name == obj_in.name,
+                Node.type_id == obj_in.type_id,
+                section_node.c.section_id == section_id,
+                section_node.c.node_id == Node.id,
+            )
+            .first()
+        )
+
         if exists_node:
             raise HTTPException(
                 status_code=400,
-                detail=f"Node with name '{obj_in.name}' already exists in section {section_id}."
+                detail=f"Node with name '{obj_in.name}' already exists in section {section_id}.",
             )
         if not section:
             raise HTTPException(
-                status_code=404,
-                detail=f"Section with id {section_id} not found."
+                status_code=404, detail=f"Section with id {section_id} not found."
             )
-        
+
         obj = obj_in.dict()
-        del obj['section_id']
-        
+        del obj["section_id"]
+
         node = Node(**obj)
         node.section = section
-        
+
         db.add(node)
         db.commit()
         db.refresh(node)
 
         return node
-    
+
     def get_by_id(self, db: Session, node_id: int) -> MODEL | None:
         return db.query(self.model).filter(self.model.id == node_id).first()
 
@@ -380,12 +387,50 @@ class CRUDNode(CRUDBase[Node, NodeCreate, NodeRead]):
         return db.query(self.model).filter(self.model.user_id == user_id).all()
 
     def get_by_section_id(self, db: Session, section_id: int) -> List[MODEL]:
-        nodes = db.query(Node).filter(
-            Node.id == section_node.c.node_id,
-            section_node.c.section_id == section_id,
-        ).all()
+        nodes = (
+            db.query(Node)
+            .filter(
+                Node.id == section_node.c.node_id,
+                section_node.c.section_id == section_id,
+            )
+            .all()
+        )
 
         return nodes
+
+    def link(self, db: Session, obj_in: NodeLink):
+        node_node_link = (
+            db.query(node_node)
+            .filter(
+                or_(
+                    and_(
+                        node_node.c.node1_id == obj_in.node1_id,
+                        node_node.c.node2_id == obj_in.node2_id,
+                    ),
+                    and_(
+                        node_node.c.node1_id == obj_in.node2_id,
+                        node_node.c.node2_id == obj_in.node1_id,
+                    ),
+                )
+            )
+            .first()
+        )
+
+        if node_node_link is not None:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Link already exists: {obj_in.node1_id}:{obj_in.node2_id}",
+            )
+
+        db.execute(
+            node_node.insert().values(
+                node1_id=obj_in.node1_id, 
+                node2_id=obj_in.node2_id,
+                user_id=obj_in.user_id
+            )
+        )
+        
+        db.commit()
 
 
 # ----------- CRUD объекты -----------

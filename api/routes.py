@@ -29,6 +29,7 @@ from api.schemas import (
     EmployeeProjectDelete,
     EmployeeRead,
     NodeCreate,
+    NodeLink,
     NodeRead,
     NodeSchema,
     NodeTypeCreate,
@@ -562,7 +563,7 @@ async def get_config_nodes(request: Request, db: Session = Depends(get_db)):
 @app.post("/sections/", tags=["sections"])
 def create_section(data: SectionCreate, ctx: RequestContext = Depends(get_context)):
     data.user_id = ctx.user.id  # Устанавливаем ID пользователя из контекста
-    
+
     section_crud.create(ctx.db, data)
 
 
@@ -611,6 +612,9 @@ def delete_section(id: int, ctx: RequestContext = Depends(get_context)):
 
 @app.post("/node-types/", response_model=NodeTypeRead, tags=["node-types"])
 def create_node_type(data: NodeTypeCreate, ctx: RequestContext = Depends(get_context)):
+    # Устанавливаем ID пользователя из контекста
+    data.user_id = ctx.user.id
+
     return node_type_crud.create(ctx.db, data)
 
 
@@ -619,6 +623,15 @@ def get_node_types(
     skip: int = 0, limit: int = 250, ctx: RequestContext = Depends(get_context)
 ):
     return node_type_crud.get_all(ctx.db, skip, limit)
+
+
+@app.get(
+    "/node-types/by-section/{section_id}",
+    response_model=List[NodeTypeRead],
+    tags=["node-types"],
+)
+def get_node_types(section_id: int, ctx: RequestContext = Depends(get_context)):
+    return node_type_crud.get_by_section_id(ctx.db, section_id=section_id)
 
 
 @app.get("/node-types/{id}", response_model=NodeTypeRead, tags=["node-types"])
@@ -661,6 +674,9 @@ def delete_node_type(id: int, ctx: RequestContext = Depends(get_context)):
 
 @app.post("/nodes/", response_model=NodeRead, tags=["nodes"])
 def create_node(data: NodeCreate, ctx: RequestContext = Depends(get_context)):
+    # Устанавливаем ID пользователя из контекста
+    data.user_id = ctx.user.id
+
     return node_crud.create(ctx.db, data)
 
 
@@ -697,7 +713,9 @@ def get_nodes_by_user(user_id: int, ctx: RequestContext = Depends(get_context)):
     return node_crud.get_by_user_id(ctx.db, user_id)
 
 
-@app.get("/nodes/by-section/{section_id}", response_model=List[NodeRead], tags=["nodes"])
+@app.get(
+    "/nodes/by-section/{section_id}", response_model=List[NodeRead], tags=["nodes"]
+)
 def get_nodes_by_user(section_id: int, ctx: RequestContext = Depends(get_context)):
     return node_crud.get_by_section_id(ctx.db, section_id)
 
@@ -711,3 +729,11 @@ def update_node(id: int, data: NodeCreate, ctx: RequestContext = Depends(get_con
 def delete_node(id: int, ctx: RequestContext = Depends(get_context)):
     node_crud.delete(ctx.db, id)
     return {"detail": "Deleted"}
+
+
+@app.post("/nodes/link", tags=["nodes"])
+def create_node(data: NodeLink, ctx: RequestContext = Depends(get_context)):
+    # Устанавливаем ID пользователя из контекста
+    data.user_id = ctx.user.id
+
+    node_crud.link(ctx.db, data)

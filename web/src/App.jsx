@@ -12,7 +12,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Management from "./pages/Management";
 import { Graph, GraphPublic } from "./pages/Graph";
-import { ConcretSection } from "./pages/Section";
+import { ConcretSection } from "./pages/Section/Section";
 
 function App() {
   return (
