@@ -54,19 +54,11 @@ employee_project = Table(
     UniqueConstraint("employee_uuid", "project_id", name="unique_employee_project"),
 )
 
-section_node = Table(
-    "section_node",
-    Base.metadata,
-    Column("section_id", ForeignKey("sections.id"), nullable=False),
-    Column("node_id", ForeignKey("nodes.id"), nullable=False),
-    UniqueConstraint("section_id", "node_id", name="unique_section_node"),
-)
-
 node_node = Table(
     "node_node",
     Base.metadata,
-    Column("node1_id", ForeignKey("nodes.id"), nullable=False),
-    Column("node2_id", ForeignKey("nodes.id"), nullable=False),
+    Column("node1_id", ForeignKey("nodes.id", ondelete="CASCADE"), nullable=False),
+    Column("node2_id", ForeignKey("nodes.id", ondelete="CASCADE"), nullable=False),
     Column("user_id", ForeignKey("users.id"), nullable=True),
     UniqueConstraint("node1_id", "node2_id", name="unique_node_node"),
 )
@@ -170,9 +162,6 @@ class Section(Base):
     user_id = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
     user: Mapped[User] = relationship("User", back_populates="sections")
 
-    nodes: Mapped[List["Node"]] = relationship(
-        secondary=section_node, back_populates="section"
-    )
     node_types: Mapped[List["NodeType"]] = relationship(
         "NodeType", back_populates="section", cascade="all, delete-orphan"
     )
@@ -185,7 +174,7 @@ class NodeType(Base):
     name = mapped_column(String, nullable=False)
     description = mapped_column(String, nullable=True)
     dt_create = mapped_column(DateTime, default=func.now(), nullable=False)
-    section_id = mapped_column(Integer, ForeignKey("sections.id"), nullable=False)
+    section_id = mapped_column(Integer, ForeignKey("sections.id", ondelete="CASCADE"), nullable=False)
     user_id = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
     user: Mapped[User] = relationship("User", back_populates="node_types")
     nodes: Mapped[List["Node"]] = relationship(
@@ -202,13 +191,10 @@ class Node(Base):
     id = mapped_column(Integer, primary_key=True, index=True)
     name = mapped_column(String, nullable=False)
     description = mapped_column(String, nullable=True)
-    type_id = mapped_column(Integer, ForeignKey("node_types.id"), nullable=False)
+    type_id = mapped_column(Integer, ForeignKey("node_types.id", ondelete="CASCADE"), nullable=False)
     dt_create = mapped_column(DateTime, default=func.now(), nullable=False)
 
     user_id = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
     user: Mapped[User] = relationship("User", back_populates="nodes")
 
-    section: Mapped[Section] = relationship(
-        "Section", secondary=section_node, back_populates="nodes"
-    )
     type: Mapped[NodeType] = relationship("NodeType", back_populates="nodes")
