@@ -6,6 +6,9 @@ import AddIcon from "@mui/icons-material/Add";
 import LinkIcon from "@mui/icons-material/Link";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import {
+  deleteNode,
+  deleteNodeType,
+  deleteSection,
   getNodeTypesBySection,
   getSectionById,
   getSections,
@@ -16,15 +19,16 @@ import Positions from "../Positions";
 import Projects from "../Projects";
 import { useLocation } from "wouter";
 import {
-  BasicDialog,
   DialogAddNode,
   DialogAddNodeLink,
   DialogAddNodeType,
   DialogAddSection,
+  DialogDelete,
 } from "./Dialogs";
 import { BasicTable } from "../Table";
 
 export const Section = ({ name = "Разделы", buttonName } = {}) => {
+  const [openDialog, openDialogActions, dialogData] = useOpenDialog();
   const [, navigate] = useLocation();
   const [sections, setSections] = useState([]);
   const [openCreateSection, setOpenCreateSection] = useState(false);
@@ -32,11 +36,7 @@ export const Section = ({ name = "Разделы", buttonName } = {}) => {
   const handleLoadSections = useCallback(() => {
     getSections()
       .then((sections) => {
-        if (sections.length === 0) {
-          console.warn("No sections found");
-        } else {
-          setSections(sections);
-        }
+        setSections(sections);
       })
       .catch((error) => {
         console.error(`Error fetching sections: ${error.message}`);
@@ -72,14 +72,15 @@ export const Section = ({ name = "Разделы", buttonName } = {}) => {
           sx={{
             transition: "color 0.2s",
             textTransform: "none",
-            alignItems: "flex-start",
+            alignItems: "center",
             justifyContent: "flex-start",
             "&:hover": {
               color: "primary.main",
             },
+            height: 56
           }}
         >
-          Сотрудники, отделы, должности и проекты
+          <Typography>Сотрудники, отделы, должности и проекты</Typography>
         </Button>
       </Stack>
       {sections.length > 0 && (
@@ -88,18 +89,33 @@ export const Section = ({ name = "Разделы", buttonName } = {}) => {
             <Button
               key={section.id}
               color="inherit"
-              onClick={() => navigate(`/management/sections/${section.id}`)}
               sx={{
                 transition: "color 0.2s",
                 textTransform: "none",
-                alignItems: "flex-start",
-                justifyContent: "flex-start",
+                alignItems: "center",
+                justifyContent: "space-between",
                 "&:hover": {
                   color: "primary.main",
                 },
               }}
             >
-              {section.description || section.name || "Неизвестно"}
+              <Typography
+                onClick={() => navigate(`/management/sections/${section.id}`)}
+                sx={{
+                  width: "100%",
+                  textAlign: "start",
+                  height: "100%"
+                }}
+              >
+                {section.description || section.name || "Неизвестно"}
+              </Typography>
+              <IconButton
+                color="error"
+                onClick={() => openDialogActions.openDeleteSection(section)}
+                aria-label="delete"
+              >
+                <DeleteIcon />
+              </IconButton>
             </Button>
           ))}
         </Stack>
@@ -110,6 +126,15 @@ export const Section = ({ name = "Разделы", buttonName } = {}) => {
         onCloseDialog={() => setOpenCreateSection(false)}
         onSubmit={() => handleLoadSections()}
       />
+      <DialogDelete 
+        title="Удаление раздела"
+        contentText="Вы уверены, что хотите удалить раздел?"
+        openDialog={openDialog.open === openDialog.deleteSection}
+        onCloseDialog={openDialogActions.reset}
+        onDelete={handleLoadSections}
+        data={dialogData}
+        fetchService={deleteSection}
+      />
     </Stack>
   );
 };
@@ -118,37 +143,53 @@ const useOpenDialog = () => {
   const [dialogData, setDialogData] = useState(null);
   const [state, setState] = useState({
     open: null,
-    addNode: "openAddNode",
-    addNodeType: "openAddNodeType",
-    deleteNode: "openDeleteNode",
-    linkNode: "openLinkNode",
+    addNode: "addNode",
+    addNodeType: "addNodeType",
+    deleteNode: "deleteNode",
+    deleteNodeType: "deleteNodeType",
+    deleteSection: "deleteSection",
+    deleteLink: "deleteLink",
+    linkNode: "linkNode",
   });
 
   const handleChangeState = {
     openAddNode: (data) => {
       setState((prev) => ({ ...prev, open: state.addNode }));
-      setDialogData(data)
+      setDialogData(data);
     },
     openAddNodeType: (data) => {
       setState((prev) => ({ ...prev, open: state.addNodeType }));
-      setDialogData(data)
+      setDialogData(data);
     },
     openDeleteNode: (data) => {
       setState((prev) => ({ ...prev, open: state.deleteNode }));
-      setDialogData(data)
+      setDialogData(data);
+    },
+    openDeleteNodeType: (data) => {
+      setState((prev) => ({ ...prev, open: state.deleteNodeType }));
+      setDialogData(data);
+    },
+    openDeleteSection: (data) => {
+      setState((prev) => ({ ...prev, open: state.deleteSection }));
+      setDialogData(data);
+    },
+    openDeleteLink: (data) => {
+      setState((prev) => ({ ...prev, open: state.deleteLink }));
+      setDialogData(data);
     },
     openLinkNode: (data) => {
       setState((prev) => ({ ...prev, open: state.linkNode }));
-      setDialogData(data)
+      setDialogData(data);
     },
     reset: () => {
       setState((prev) => ({ ...prev, open: null }));
-      setDialogData(null)
+      setDialogData(null);
     },
   };
 
   return [state, handleChangeState, dialogData];
 };
+
 export const ConcretSection = ({ sectionId }) => {
   const [openDialog, openDialogActions, dialogData] = useOpenDialog();
   const [selectedNodeType, setSelectedNodeType] = useState({});
@@ -177,22 +218,10 @@ export const ConcretSection = ({ sectionId }) => {
     [openDialogActions]
   );
 
-  const handleOpenRelationsDialog = (item) => {
-    openDialogActions.openLinkNode(item);
-  };
-
-  const handleOpenDeleteDialog = (item) => {
-    openDialogActions.openDeleteNode(item);
-  };
-
   const loadNodeTypes = useCallback(() => {
     getNodeTypesBySection({ sectionId })
       .then((types) => {
-        if (types.length === 0) {
-          console.warn("No node types found");
-        } else {
-          setNodeTypes(types);
-        }
+        setNodeTypes(types);
       })
       .catch((error) => {
         console.error(`Error fetching node types: ${error.message}`);
@@ -245,6 +274,7 @@ export const ConcretSection = ({ sectionId }) => {
           color="primary"
           startIcon={<AddIcon />}
           onClick={openDialogActions.openAddNodeType}
+          sx={{ width: 150 }}
         >
           Добавить тип
         </Button>
@@ -264,7 +294,7 @@ export const ConcretSection = ({ sectionId }) => {
               <Typography variant="h5">
                 {nodeType.description || nodeType.name}
               </Typography>
-              <Stack direction="row" spacing={1}>
+              <Stack direction="row" justifyContent="space-between" spacing={1} sx={{ width: 150 }}>
                 <Button
                   variant="contained"
                   color="primary"
@@ -275,7 +305,7 @@ export const ConcretSection = ({ sectionId }) => {
                 <Button
                   variant="contained"
                   color="error"
-                  onClick={() => alert("Удаление типа узлов не реализовано")}
+                  onClick={() => openDialogActions.openDeleteNodeType(nodeType)}
                 >
                   <DeleteIcon />
                 </Button>
@@ -294,14 +324,14 @@ export const ConcretSection = ({ sectionId }) => {
                       </IconButton> */}
                         <IconButton
                           color="secondary"
-                          onClick={() => handleOpenRelationsDialog(item)}
+                          onClick={() => openDialogActions.openLinkNode(item)}
                           aria-label="manage relations"
                         >
                           <LinkIcon />
                         </IconButton>
                         <IconButton
                           color="error"
-                          onClick={() => handleOpenDeleteDialog(item)}
+                          onClick={() => openDialogActions.openDeleteNode(item)}
                           aria-label="delete"
                         >
                           <DeleteIcon />
@@ -342,7 +372,25 @@ export const ConcretSection = ({ sectionId }) => {
       />
 
       {/* Удаление узла */}
-
+      <DialogDelete
+        title="Удаление узла"
+        contentText="Вы уверены, что хотите удалить узел?"
+        openDialog={openDialog.open === openDialog.deleteNode}
+        onCloseDialog={openDialogActions.reset}
+        onDelete={handleFormSubmit}
+        data={dialogData}
+        fetchService={deleteNode}
+      />
+      {/* Удаление типа узла */}
+      <DialogDelete
+        title="Удаление типа узла"
+        contentText="Вы уверены, что хотите удалить тип узла?"
+        openDialog={openDialog.open === openDialog.deleteNodeType}
+        onCloseDialog={openDialogActions.reset}
+        onDelete={handleFormSubmit}
+        data={dialogData}
+        fetchService={deleteNodeType}
+      />
       {/* Управление связями узла */}
       <DialogAddNodeLink
         openDialog={openDialog.open === openDialog.linkNode}
