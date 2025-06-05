@@ -17,7 +17,6 @@ from .models import (
     employee_position,
     employee_employee,
     employee_project,
-    section_node,
     node_node,
 )
 from .schemas import (
@@ -348,9 +347,7 @@ class CRUDNode(CRUDBase[Node, NodeCreate, NodeRead]):
             db.query(Node)
             .filter(
                 Node.name == obj_in.name,
-                Node.type_id == obj_in.type_id,
-                section_node.c.section_id == section_id,
-                section_node.c.node_id == Node.id,
+                Node.type_id == obj_in.type_id
             )
             .first()
         )
@@ -369,7 +366,6 @@ class CRUDNode(CRUDBase[Node, NodeCreate, NodeRead]):
         del obj["section_id"]
 
         node = Node(**obj)
-        node.section = section
 
         db.add(node)
         db.commit()
@@ -385,18 +381,6 @@ class CRUDNode(CRUDBase[Node, NodeCreate, NodeRead]):
 
     def get_by_user_id(self, db: Session, user_id: int) -> List[MODEL]:
         return db.query(self.model).filter(self.model.user_id == user_id).all()
-
-    def get_by_section_id(self, db: Session, section_id: int) -> List[MODEL]:
-        nodes = (
-            db.query(Node)
-            .filter(
-                Node.id == section_node.c.node_id,
-                section_node.c.section_id == section_id,
-            )
-            .all()
-        )
-
-        return nodes
 
     def link(self, db: Session, obj_in: NodeLink):
         node_node_link = (
