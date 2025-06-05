@@ -190,11 +190,20 @@ export const getSectionById = async ({ sectionId }) => {
 export const createSection = async (sectionData) => {
     return await createData(`${API_BASE_URL}/sections/`, sectionData);
 }
-export const getNodesBySection = async ({ sectionId }) => {
-    return await getData(`${API_BASE_URL}/nodes/by-section/${sectionId}`);
+export const deleteSection = async (sectionId) => {
+    return await deleteData(`${API_BASE_URL}/sections/${sectionId}`);
 }
+// export const getNodesBySection = async ({ sectionId }) => {
+//     return await getData(`${API_BASE_URL}/nodes/by-section/${sectionId}`);
+// }
 export const createNode = async (nodeData) => {
     return await createData(`${API_BASE_URL}/nodes/`, nodeData);
+}
+export const deleteNode = async (nodeId) => {
+    return await deleteData(`${API_BASE_URL}/nodes/${nodeId}`);
+}
+export const deleteNodeType = async (nodeTypeId) => {
+    return await deleteData(`${API_BASE_URL}/node-types/${nodeTypeId}`);
 }
 export const getNodeTypes = async () => {
     return await getData(`${API_BASE_URL}/node-types/`);
