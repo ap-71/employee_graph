@@ -28,6 +28,8 @@ export const BasicDialog = ({
   children = null,
   onSubmit = null,
   buttonSubmitText = "Сохранить",
+  onDelete = null,
+  buttonDeleteText = "Удалить",
   isValid = true,
 } = {}) => {
   const handleSubmit = useCallback(() => {
@@ -50,6 +52,11 @@ export const BasicDialog = ({
         {onSubmit && (
           <Button onClick={handleSubmit} disabled={!isValid}>
             {buttonSubmitText}
+          </Button>
+        )}
+        {onDelete && (
+          <Button onClick={onDelete} color="error" variant="contained">
+            {buttonDeleteText}
           </Button>
         )}
       </DialogActions>
@@ -324,7 +331,7 @@ export const DialogAddNodeLink = ({
             <MenuItem value="">
               <em>Не выбрано</em>
             </MenuItem>
-            {nodeTypes.map((nt) => (
+            {nodeTypes.filter(nt => nt.nodes?.filter(n => n.id !== node?.id).length > 0 ).map((nt) => (
               <MenuItem key={nt.id} value={nt.id}>
                 {nt.name}
               </MenuItem>
@@ -372,3 +379,35 @@ export const DialogAddNodeLink = ({
     </BasicDialog>
   );
 };
+
+export const DialogDelete = ({
+  title = "Удаление",
+  buttonDeleteText="Удалить",
+  contentText="Вы уверены, что хотите удалить?",
+  openDialog = false,
+  onCloseDialog = () => {},
+  onDelete = () => {},
+  fetchService = async () => {},
+  data = null,
+} = {}) => {
+  const handleDelete = useCallback(() => {
+    fetchService(data?.id).then(() => {
+      onDelete()
+      onCloseDialog()
+    }).catch(e => {
+      console.error(`Ошибка при удалении: ${e}`)
+    })
+  }, [data?.id, fetchService, onCloseDialog, onDelete])
+
+  return <BasicDialog
+    open={openDialog}
+    onClose={onCloseDialog}
+    onDelete={handleDelete}
+    buttonDeleteText={buttonDeleteText}
+    title={title}
+  >
+    <Typography>
+      {contentText}
+    </Typography>
+  </BasicDialog>
+}
