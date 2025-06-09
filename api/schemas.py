@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Self
 from pydantic import BaseModel
 
 
@@ -191,6 +191,7 @@ class ConfigNodesSchema(BaseModel):
     multiplier_node_size: float | None = None
     node_labels_show: bool | None = None
 
+
 class UserSchema(BaseModel):
     id: int
     username: str
@@ -204,7 +205,8 @@ class SectionCreate(BaseModel):
 
     class Config:
         from_attributes = True
-        
+
+
 class SectionRead(BaseModel):
     id: int
     name: str
@@ -215,6 +217,7 @@ class SectionRead(BaseModel):
     class Config:
         from_attributes = True
 
+
 class NodeTypeCreate(BaseModel):
     name: str
     description: Optional[str] = None
@@ -224,17 +227,19 @@ class NodeTypeCreate(BaseModel):
 
     class Config:
         from_attributes = True
-        
+
+
 class NodeTypeRead(BaseModel):
     id: int
     name: str
     description: Optional[str] = None
     dt_create: datetime | None = None
     user: UserSchema | None = None
-    nodes: List['NodeRead'] = []
+    nodes: List["NodeRead"] = []
 
     class Config:
         from_attributes = True
+
 
 class NodeCreate(BaseModel):
     name: str
@@ -245,7 +250,16 @@ class NodeCreate(BaseModel):
 
     class Config:
         from_attributes = True
-        
+
+
+class NodeRef(BaseModel):
+    id: int
+    name: str
+
+    class Config:
+        from_attributes = True
+
+
 class NodeRead(BaseModel):
     id: int
     name: str
@@ -253,8 +267,12 @@ class NodeRead(BaseModel):
     user: UserSchema | None = None
     dt_create: datetime | None = None
 
+    nodes: List[NodeRef] = []
+    nodes_to_this: List[NodeRef] = []
+
     class Config:
         from_attributes = True
+
 
 class NodeLink(BaseModel):
     node1_id: int
