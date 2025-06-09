@@ -230,7 +230,7 @@ export const ConcretSection = ({ sectionId }) => {
 
   const handleFormSubmit = useCallback(() => {
     loadNodeTypes();
-  }, [loadNodeTypes]);
+  }, [loadNodeTypes])
 
   useEffect(() => {
     if (sectionId === "st_0") {
@@ -397,8 +397,10 @@ export const ConcretSection = ({ sectionId }) => {
         onCloseDialog={openDialogActions.reset}
         onSubmit={handleFormSubmit}
         sectionId={sectionId}
-        node={dialogData}
-        nodeTypes={nodeTypes}
+        data={{
+          node: dialogData,
+          nodeTypes: nodeTypes
+        }}
       />
     </Stack>
   );
