@@ -1,8 +1,9 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   createNode,
   createNodeType,
   createSection,
+  getNodeById,
   linkNodes,
 } from "../../services/api";
 import {
@@ -276,31 +277,77 @@ export const DialogAddNodeLink = ({
   openDialog = false,
   onCloseDialog = () => {},
   onSubmit = () => {},
-  node = null,
-  nodeTypes = [],
+  data = {
+    node: null,
+    nodeTypes: [],
+  },
 } = {}) => {
   const [loading, setLoading] = useState(false);
   const [selectedNodeType, setSelectedNodeType] = useState(null);
   const [selectedNode, setSelectedNode] = useState(null);
+  const [node, setNode] = useState({});
+  const nodeTypes = useMemo(() => {
+    return data?.nodeTypes?.filter(
+      (nt) =>
+        nt.nodes?.filter(
+          (n) =>
+            n.id !== node?.id &&
+            node?.nodes?.find((f) => f.id === n.id) === undefined &&
+            node?.nodes_to_this?.find((f) => f.id === n.id) === undefined
+        ).length > 0
+    );
+  }, [data?.nodeTypes, node?.id, node?.nodes, node?.nodes_to_this]);
+
+  const nodesForSelectedNodeType = useMemo(() => {
+    return selectedNodeType?.nodes?.filter(
+      (n) =>
+        n.id !== node.id &&
+        node?.nodes.find((f) => f.id === n.id) === undefined &&
+        node?.nodes_to_this.find((f) => f.id === n.id) === undefined
+    );
+  }, [node?.id, node?.nodes, node?.nodes_to_this, selectedNodeType?.nodes]);
+  
+  const loadNode = useCallback(() => {
+    if(!openDialog){ return }
+    
+    getNodeById(data.node.id)
+      .then((d) => {
+        setNode(d);
+        console.debug(d);
+      })
+      .catch((e) => {
+        console.error("Ошибка при получении узла: " + e);
+      });
+  }, [data?.node?.id]);
+
+  useEffect(() => {
+    if (data?.node?.id === undefined) {
+      return;
+    }
+
+    loadNode();
+  }, [data?.node?.id, loadNode]);
 
   const handleFormSubmit = useCallback(() => {
     if (node?.id && selectedNode?.id) {
       setLoading(true);
 
-      linkNodes(node.id, selectedNode.id).then((data) => {
-        onSubmit(data);
-        setSelectedNodeType(null);
-        setSelectedNode(null);
-      }).catch(e => {
-        console.error(`Ошибка при связывании: ${e}`)
-      }).finally(() => {
-        setLoading(false);
-      })
-      
+      linkNodes(node.id, selectedNode.id)
+        .then((data) => {
+          onSubmit(data);
+          setSelectedNode(null);
+          loadNode();
+        })
+        .catch((e) => {
+          console.error(`Ошибка при связывании: ${e}`);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
     } else {
       alert("Ошибка при связывании");
     }
-  }, [node?.id, onSubmit, selectedNode?.id]);
+  }, [loadNode, node?.id, onSubmit, selectedNode?.id]);
 
   const handleClose = useCallback(() => {
     onCloseDialog();
@@ -320,18 +367,18 @@ export const DialogAddNodeLink = ({
           <Select
             labelId="department-select-label"
             id="department-select"
-            value={selectedNodeType?.id || ""}
+            value={nodeTypes.length !== 0 ? selectedNodeType?.id || "" : ""}
             label="Выбрать тип"
             onChange={(e) =>
               setSelectedNodeType(
-                nodeTypes.find((f) => f.id === +e.target.value)
+                data.nodeTypes.find((f) => f.id === +e.target.value)
               )
             }
           >
-            <MenuItem value="">
+            <MenuItem value="" selected>
               <em>Не выбрано</em>
             </MenuItem>
-            {nodeTypes.filter(nt => nt.nodes?.filter(n => n.id !== node?.id).length > 0 ).map((nt) => (
+            {nodeTypes.map((nt) => (
               <MenuItem key={nt.id} value={nt.id}>
                 {nt.name}
               </MenuItem>
@@ -356,13 +403,11 @@ export const DialogAddNodeLink = ({
             <MenuItem value="">
               <em>Не выбрано</em>
             </MenuItem>
-            {selectedNodeType?.nodes
-              ?.filter((n) => n.id !== node.id)
-              .map((n) => (
-                <MenuItem key={n.id} value={n.id}>
-                  {n.name}
-                </MenuItem>
-              ))}
+            {nodesForSelectedNodeType?.map((n) => (
+              <MenuItem key={n.id} value={n.id}>
+                {n.name}
+              </MenuItem>
+            ))}
           </Select>
         </FormControl>
         <Button
@@ -370,8 +415,10 @@ export const DialogAddNodeLink = ({
           variant="contained"
           size="small"
           disabled={loading || !selectedNode}
-          startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
-          sx={{ minWidth: "auto"}}
+          startIcon={
+            loading ? <CircularProgress size={20} color="inherit" /> : null
+          }
+          sx={{ minWidth: "auto" }}
         >
           Связать
         </Button>
@@ -382,8 +429,8 @@ export const DialogAddNodeLink = ({
 
 export const DialogDelete = ({
   title = "Удаление",
-  buttonDeleteText="Удалить",
-  contentText="Вы уверены, что хотите удалить?",
+  buttonDeleteText = "Удалить",
+  contentText = "Вы уверены, что хотите удалить?",
   openDialog = false,
   onCloseDialog = () => {},
   onDelete = () => {},
@@ -391,23 +438,25 @@ export const DialogDelete = ({
   data = null,
 } = {}) => {
   const handleDelete = useCallback(() => {
-    fetchService(data?.id).then(() => {
-      onDelete()
-      onCloseDialog()
-    }).catch(e => {
-      console.error(`Ошибка при удалении: ${e}`)
-    })
-  }, [data?.id, fetchService, onCloseDialog, onDelete])
+    fetchService(data?.id)
+      .then(() => {
+        onDelete();
+        onCloseDialog();
+      })
+      .catch((e) => {
+        console.error(`Ошибка при удалении: ${e}`);
+      });
+  }, [data?.id, fetchService, onCloseDialog, onDelete]);
 
-  return <BasicDialog
-    open={openDialog}
-    onClose={onCloseDialog}
-    onDelete={handleDelete}
-    buttonDeleteText={buttonDeleteText}
-    title={title}
-  >
-    <Typography>
-      {contentText}
-    </Typography>
-  </BasicDialog>
-}
+  return (
+    <BasicDialog
+      open={openDialog}
+      onClose={onCloseDialog}
+      onDelete={handleDelete}
+      buttonDeleteText={buttonDeleteText}
+      title={title}
+    >
+      <Typography>{contentText}</Typography>
+    </BasicDialog>
+  );
+};
