@@ -198,3 +198,20 @@ class Node(Base):
     user: Mapped[User] = relationship("User", back_populates="nodes")
 
     type: Mapped[NodeType] = relationship("NodeType", back_populates="nodes")
+
+     # Связь многие-ко-многим с самим собой
+    nodes: Mapped[List["Node"]] = relationship(
+        "Node",
+        secondary=node_node,
+        primaryjoin=id == node_node.c.node1_id,
+        secondaryjoin=id == node_node.c.node2_id,
+        back_populates="nodes_to_this"
+    )
+
+    nodes_to_this: Mapped[List["Node"]] = relationship(
+        "Node",
+        secondary=node_node,
+        primaryjoin=id == node_node.c.node2_id,
+        secondaryjoin=id == node_node.c.node1_id,
+        back_populates="nodes"
+    )
