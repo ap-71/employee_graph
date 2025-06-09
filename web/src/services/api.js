@@ -205,6 +205,9 @@ export const deleteNode = async (nodeId) => {
 export const deleteNodeType = async (nodeTypeId) => {
     return await deleteData(`${API_BASE_URL}/node-types/${nodeTypeId}`);
 }
+export const getNodeById = async (nodeId) => {
+    return await getData(`${API_BASE_URL}/nodes/${nodeId}`);
+}
 export const getNodeTypes = async () => {
     return await getData(`${API_BASE_URL}/node-types/`);
 }
