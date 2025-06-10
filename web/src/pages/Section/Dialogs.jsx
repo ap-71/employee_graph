@@ -6,7 +6,9 @@ import {
   getNodeById,
   linkNodes,
 } from "../../services/api";
+import DeleteIcon from "@mui/icons-material/Delete";
 import {
+  Box,
   Button,
   CircularProgress,
   Dialog,
@@ -14,10 +16,14 @@ import {
   DialogContent,
   DialogTitle,
   FormControl,
+  IconButton,
   InputLabel,
+  ListItemText,
   MenuItem,
   Select,
   Stack,
+  Tab,
+  Tabs,
   TextField,
   Typography,
 } from "@mui/material";
@@ -306,19 +312,20 @@ export const DialogAddNodeLink = ({
         node?.nodes_to_this.find((f) => f.id === n.id) === undefined
     );
   }, [node?.id, node?.nodes, node?.nodes_to_this, selectedNodeType?.nodes]);
-  
+
   const loadNode = useCallback(() => {
-    if(!openDialog){ return }
-    
+    if (!openDialog) {
+      return;
+    }
+
     getNodeById(data.node.id)
       .then((d) => {
         setNode(d);
-        console.debug(d);
       })
       .catch((e) => {
         console.error("Ошибка при получении узла: " + e);
       });
-  }, [data?.node?.id]);
+  }, [data?.node?.id, openDialog]);
 
   useEffect(() => {
     if (data?.node?.id === undefined) {
@@ -457,6 +464,92 @@ export const DialogDelete = ({
       title={title}
     >
       <Typography>{contentText}</Typography>
+    </BasicDialog>
+  );
+};
+
+export const DialogViewLinkNode = ({
+  title = "Связи узла",
+  openDialog = false,
+  onCloseDialog = () => {},
+  data = {},
+} = {}) => {
+  const [tab, setTab] = useState("val-1");
+  const links = useMemo(
+    () => [...(data?.nodes || []), ...(data?.nodes_to_this || [])],
+    [data?.nodes, data?.nodes_to_this]
+  );
+  const tabs = useMemo(() => {
+    const obj = {};
+
+    links.forEach((l) => {
+      if (obj[l.type?.id] === undefined) {
+        obj[l.type?.id] = { ...l.type, nodes: [] };
+      }
+      obj[l.type?.id]?.nodes?.push(l);
+    });
+
+    return obj;
+  }, [links]);
+
+  useEffect(() => {
+    setTab(Object.keys(tabs)[0]);
+  }, [tabs]);
+
+  return (
+    <BasicDialog open={openDialog} onClose={onCloseDialog} title={title}>
+      {Object.values(tabs).length === 0 && <Typography>Связей пока нет</Typography>}
+      {Object.values(tabs).length > 0 && <>
+      <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+        <Tabs
+          value={tab}
+          onChange={(e, val) => setTab(val)}
+          aria-label="basic tabs example"
+          variant="scrollable"
+        >
+          {Object.values(tabs).map((val) => (
+            <Tab
+              key={val.id}
+              label={val.description || val.name}
+              value={"" + val.id}
+            />
+          ))}
+        </Tabs>
+      </Box>
+      <Stack mt={4} mb={4} ml={2} mr={2}>
+        {Object.values(tabs).map((t) => {
+          return (
+            <Stack
+              key={t.id}
+              direction="column"
+              spacing={2}
+              sx={{
+                display: "" + t.id === tab ? "unset" : "none",
+              }}
+            >
+              {t.nodes.map((n) => {
+                return (
+                  <Stack
+                    key={n.id}
+                    direction="row"
+                    sx={{
+                      minWidth: 500,
+                      borderBottom: 1,
+                      borderColor: "divider",
+                    }}
+                  >
+                    <ListItemText primary={n.name} secondary={`ID: ${n.id}`} />
+                    <IconButton color="error" sx={{ width: 50, height: 50 }}>
+                      <DeleteIcon />
+                    </IconButton>
+                  </Stack>
+                );
+              })}
+            </Stack>
+          );
+        })}
+      </Stack>
+      </>}
     </BasicDialog>
   );
 };
