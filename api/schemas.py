@@ -252,9 +252,18 @@ class NodeCreate(BaseModel):
         from_attributes = True
 
 
+class NodeTypeRef(BaseModel):
+    id: int
+    name: str
+    description: str
+
+    class Config:
+        from_attributes = True
+
 class NodeRef(BaseModel):
     id: int
     name: str
+    type: NodeTypeRef
 
     class Config:
         from_attributes = True
