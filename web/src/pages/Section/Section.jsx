@@ -24,6 +24,7 @@ import {
   DialogAddNodeType,
   DialogAddSection,
   DialogDelete,
+  DialogViewLinkNode,
 } from "./Dialogs";
 import { BasicTable } from "../Table";
 
@@ -77,7 +78,7 @@ export const Section = ({ name = "Разделы", buttonName } = {}) => {
             "&:hover": {
               color: "primary.main",
             },
-            height: 56
+            height: 56,
           }}
         >
           <Typography>Сотрудники, отделы, должности и проекты</Typography>
@@ -104,7 +105,7 @@ export const Section = ({ name = "Разделы", buttonName } = {}) => {
                 sx={{
                   width: "100%",
                   textAlign: "start",
-                  height: "100%"
+                  height: "100%",
                 }}
               >
                 {section.description || section.name || "Неизвестно"}
@@ -126,7 +127,7 @@ export const Section = ({ name = "Разделы", buttonName } = {}) => {
         onCloseDialog={() => setOpenCreateSection(false)}
         onSubmit={() => handleLoadSections()}
       />
-      <DialogDelete 
+      <DialogDelete
         title="Удаление раздела"
         contentText="Вы уверены, что хотите удалить раздел?"
         openDialog={openDialog.open === openDialog.deleteSection}
@@ -150,36 +151,41 @@ const useOpenDialog = () => {
     deleteSection: "deleteSection",
     deleteLink: "deleteLink",
     linkNode: "linkNode",
+    editNode: "editNode",
+    viewLinkNode: "viewLinkNode",
   });
 
   const handleChangeState = {
     openAddNode: (data) => {
-      setState((prev) => ({ ...prev, open: state.addNode }));
-      setDialogData(data);
+      handleChangeState.setState(state.addNode, data)
     },
     openAddNodeType: (data) => {
-      setState((prev) => ({ ...prev, open: state.addNodeType }));
-      setDialogData(data);
+      handleChangeState.setState(state.addNodeType, data)
     },
     openDeleteNode: (data) => {
-      setState((prev) => ({ ...prev, open: state.deleteNode }));
-      setDialogData(data);
+      handleChangeState.setState(state.deleteNode, data)
     },
     openDeleteNodeType: (data) => {
-      setState((prev) => ({ ...prev, open: state.deleteNodeType }));
-      setDialogData(data);
+      handleChangeState.setState(state.deleteNodeType, data)
     },
     openDeleteSection: (data) => {
-      setState((prev) => ({ ...prev, open: state.deleteSection }));
-      setDialogData(data);
+      handleChangeState.setState(state.deleteSection, data)
     },
     openDeleteLink: (data) => {
-      setState((prev) => ({ ...prev, open: state.deleteLink }));
-      setDialogData(data);
+      handleChangeState.setState(state.deleteLink, data)
     },
     openLinkNode: (data) => {
-      setState((prev) => ({ ...prev, open: state.linkNode }));
-      setDialogData(data);
+      handleChangeState.setState(state.linkNode, data)
+    },
+    editNode: (data) => {
+      handleChangeState.setState(state.editNode, data)
+    },
+    viewLinkNode: (data) => {
+      handleChangeState.setState(state.viewLinkNode, data)
+    },
+    setState: (currentState, currentData) => {
+      setState((prev) => ({ ...prev, open: currentState }));
+      setDialogData(currentData);
     },
     reset: () => {
       setState((prev) => ({ ...prev, open: null }));
@@ -230,7 +236,7 @@ export const ConcretSection = ({ sectionId }) => {
 
   const handleFormSubmit = useCallback(() => {
     loadNodeTypes();
-  }, [loadNodeTypes])
+  }, [loadNodeTypes]);
 
   useEffect(() => {
     if (sectionId === "st_0") {
@@ -294,7 +300,12 @@ export const ConcretSection = ({ sectionId }) => {
               <Typography variant="h5">
                 {nodeType.description || nodeType.name}
               </Typography>
-              <Stack direction="row" justifyContent="space-between" spacing={1} sx={{ width: 150 }}>
+              <Stack
+                direction="row"
+                justifyContent="space-between"
+                spacing={1}
+                sx={{ width: 150 }}
+              >
                 <Button
                   variant="contained"
                   color="primary"
@@ -319,9 +330,20 @@ export const ConcretSection = ({ sectionId }) => {
                     description: item.description,
                     actions: (
                       <>
-                        {/* <IconButton color="primary" onClick={() => handleOpenEditForm(item)} aria-label="edit">
-                        <EditIcon />
-                      </IconButton> */}
+                        <IconButton
+                          color="info"
+                          onClick={() => openDialogActions.viewLinkNode(item)}
+                          aria-label="view relations"
+                        >
+                          <VisibilityIcon />
+                        </IconButton>
+                        {/* <IconButton
+                          color="primary"
+                          onClick={() => openDialogActions.editNode(item)}
+                          aria-label="edit"
+                        >
+                          <EditIcon />
+                        </IconButton> */}
                         <IconButton
                           color="secondary"
                           onClick={() => openDialogActions.openLinkNode(item)}
@@ -336,10 +358,6 @@ export const ConcretSection = ({ sectionId }) => {
                         >
                           <DeleteIcon />
                         </IconButton>
-
-                        {/* <IconButton color="info" onClick={() => handleOpenViewRelations(item)} aria-label="view relations">
-                        <VisibilityIcon />
-                      </IconButton> */}
                       </>
                     ),
                   };
@@ -399,8 +417,16 @@ export const ConcretSection = ({ sectionId }) => {
         sectionId={sectionId}
         data={{
           node: dialogData,
-          nodeTypes: nodeTypes
+          nodeTypes: nodeTypes,
         }}
+      />
+
+      {/* редактирование узла */}
+      <DialogViewLinkNode
+        openDialog={openDialog.open === openDialog.viewLinkNode}
+        onCloseDialog={openDialogActions.reset}
+        onSubmit={handleFormSubmit}
+        data={dialogData}
       />
     </Stack>
   );
