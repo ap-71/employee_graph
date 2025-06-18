@@ -185,7 +185,7 @@ const useOpenDialog = () => {
     },
     setState: (currentState, currentData) => {
       setState((prev) => ({ ...prev, open: currentState }));
-      setDialogData(currentData);
+      setDialogData(JSON.parse(JSON.stringify(currentData)));
     },
     reset: () => {
       setState((prev) => ({ ...prev, open: null }));
@@ -421,13 +421,114 @@ export const ConcretSection = ({ sectionId }) => {
         }}
       />
 
-      {/* редактирование узла */}
+      {/* редактирование связей узла */}
       <DialogViewLinkNode
         openDialog={openDialog.open === openDialog.viewLinkNode}
-        onCloseDialog={openDialogActions.reset}
-        onSubmit={handleFormSubmit}
+        onCloseDialog={() => {
+          openDialogActions.reset()
+          handleFormSubmit()
+        }}
+        onDeleteLink={({ deletedNodeLink }) => {
+          dialogData.nodes = [...dialogData.nodes.filter(n => n.id !== deletedNodeLink.id)]
+          dialogData.nodes_to_this = [...dialogData.nodes_to_this.filter(n => n.id !== deletedNodeLink.id)]
+          openDialogActions.viewLinkNode({...dialogData})
+        }}
         data={dialogData}
       />
     </Stack>
   );
 };
+
+export const GraphSection = ({ name="Разделы", sectionId, isPublic=false } = {}) => {
+  const [openDialog, openDialogActions, dialogData] = useOpenDialog();
+  const [, navigate] = useLocation();
+  const [sections, setSections] = useState([]);
+  const [openCreateSection, setOpenCreateSection] = useState(false);
+
+  const handleLoadSections = useCallback(() => {
+    getSections()
+      .then((sections) => {
+        setSections(sections);
+      })
+      .catch((error) => {
+        console.error(`Error fetching sections: ${error.message}`);
+      });
+  }, []);
+
+  useEffect(() => {
+    handleLoadSections();
+  }, [handleLoadSections]);
+
+  return (
+    <Stack sx={{ p: 2, width: "50vw" }}>
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        sx={{ mb: 2, width: "100%" }}
+      >
+        <Typography variant="h4">{name}</Typography>
+      </Stack>
+
+      <Stack spacing={2} sx={{ mb: 2 }}>
+        <Button
+          color="inherit"
+          onClick={() => navigate(`/graph`)}
+          
+          sx={{
+            transition: "color 0.2s",
+            textTransform: "none",
+            alignItems: "center",
+            justifyContent: "flex-start",
+            "&:hover": {
+              color: "primary.main",
+            },
+            height: 56,
+          }}
+        >
+          <Typography>Сотрудники, отделы, должности и проекты</Typography>
+        </Button>
+      </Stack>
+      {sections.length > 0 && (
+        <Stack spacing={2} sx={{ mb: 2 }}>
+          {sections.map((section) => (
+            <Button
+              key={section.id}
+              color="inherit"
+              sx={{
+                transition: "color 0.2s",
+                textTransform: "none",
+                alignItems: "center",
+                justifyContent: "space-between",
+                "&:hover": {
+                  color: "primary.main",
+                },
+                height: 56,
+              }}
+            >
+              <Typography
+                onClick={() => navigate(`/graph/sections/${section.id}`)}
+              >
+                {section.description || section.name || "Неизвестно"}
+              </Typography>
+            </Button>
+          ))}
+        </Stack>
+      )}
+
+      {/* <DialogAddSection
+        openDialog={openCreateSection}
+        onCloseDialog={() => setOpenCreateSection(false)}
+        onSubmit={() => handleLoadSections()}
+      />
+      <DialogDelete
+        title="Удаление раздела"
+        contentText="Вы уверены, что хотите удалить раздел?"
+        openDialog={openDialog.open === openDialog.deleteSection}
+        onCloseDialog={openDialogActions.reset}
+        onDelete={handleLoadSections}
+        data={dialogData}
+        fetchService={deleteSection}
+      /> */}
+    </Stack>
+  );
+}

@@ -3,6 +3,7 @@ import {
   createNode,
   createNodeType,
   createSection,
+  deleteLink,
   getNodeById,
   linkNodes,
 } from "../../services/api";
@@ -472,17 +473,16 @@ export const DialogViewLinkNode = ({
   title = "Связи узла",
   openDialog = false,
   onCloseDialog = () => {},
+  onDeleteLink = () => {},
   data = {},
+  defaultTab="val-1"
 } = {}) => {
-  const [tab, setTab] = useState("val-1");
-  const links = useMemo(
-    () => [...(data?.nodes || []), ...(data?.nodes_to_this || [])],
-    [data?.nodes, data?.nodes_to_this]
-  );
+  const [tab, setTab] = useState(defaultTab);
+
   const tabs = useMemo(() => {
     const obj = {};
 
-    links.forEach((l) => {
+    [...(data?.nodes || []), ...(data?.nodes_to_this || [])].forEach((l) => {
       if (obj[l.type?.id] === undefined) {
         obj[l.type?.id] = { ...l.type, nodes: [] };
       }
@@ -490,11 +490,20 @@ export const DialogViewLinkNode = ({
     });
 
     return obj;
-  }, [links]);
+  }, [data?.nodes, data?.nodes_to_this]);
 
   useEffect(() => {
     setTab(Object.keys(tabs)[0]);
   }, [tabs]);
+
+  const handleDelete = useCallback((node) => {
+    deleteLink(data.id, node.id).then(() => {
+      console.info(`Связь удалена`)
+      onDeleteLink({ node: data, deletedNodeLink: node })
+    }).catch(e => {
+      console.error(`Ошибка при удалении: ${e}`)
+    })
+  }, [data, onDeleteLink])
 
   return (
     <BasicDialog open={openDialog} onClose={onCloseDialog} title={title}>
@@ -539,7 +548,7 @@ export const DialogViewLinkNode = ({
                     }}
                   >
                     <ListItemText primary={n.name} secondary={`ID: ${n.id}`} />
-                    <IconButton color="error" sx={{ width: 50, height: 50 }}>
+                    <IconButton color="error" sx={{ width: 50, height: 50 }} onClick={() => handleDelete(n)}>
                       <DeleteIcon />
                     </IconButton>
                   </Stack>
