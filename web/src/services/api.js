@@ -221,3 +221,6 @@ export const createNodeType = async (nodeTypeData) => {
 export const linkNodes = async (nodeId1, nodeId2) => {
     return await createData(`${API_BASE_URL}/nodes/link`, {node1_id: nodeId1, node2_id: nodeId2});
 }
+export const deleteLink = async (nodeId1, nodeId2) => {
+    return await deleteData(`${API_BASE_URL}/nodes/link/${nodeId1}/${nodeId2}`)
+}
