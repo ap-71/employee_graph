@@ -6,12 +6,12 @@ from sqlalchemy.orm import Session
 from api.db import get_db
 from api.auth import app, check_token, oauth2_scheme
 from api.models import (
-    User,
     employee_department,
     employee_employee,
     employee_position,
     employee_project,
 )
+from api.routes_helpers import RequestContext, RequestPubContext, get_context, get_pub_context
 from api.schemas import (
     ConfigNodesSchema,
     DepartmentCreate,
@@ -53,28 +53,6 @@ from api.crud import (
 )
 
 
-from typing import NamedTuple
-
-
-class RequestContext(NamedTuple):
-    db: Session
-    user: User
-
-
-class RequestPubContext(NamedTuple):
-    db: Session
-
-
-def get_context(
-    db: Session = Depends(get_db), user: User = Depends(check_token)
-) -> RequestContext:
-    return RequestContext(db=db, user=user)
-
-
-def get_pub_context(
-    db: Session = Depends(get_db),
-) -> RequestContext:
-    return RequestPubContext(db=db)
 
 
 # ----------- Маршруты для получения количества объектов -----------
@@ -737,3 +715,8 @@ def create_node(data: NodeLink, ctx: RequestContext = Depends(get_context)):
     data.user_id = ctx.user.id
 
     node_crud.link(ctx.db, data)
+
+
+@app.delete("/nodes/link/{node_id_1}/{node_id_2}", tags=["nodes"])
+def delete_node_link(node_id_1: int, node_id_2: int, ctx: RequestContext = Depends(get_context)):
+    node_crud.delete_link(ctx, node_id_1, node_id_2)

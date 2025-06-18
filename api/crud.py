@@ -1,7 +1,9 @@
 from typing import Generic, List, TypeVar
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, delete, or_
+
+from api.routes_helpers import RequestContext
 
 
 from .models import (
@@ -416,6 +418,22 @@ class CRUDNode(CRUDBase[Node, NodeCreate, NodeRead]):
         
         db.commit()
 
+    def delete_link(self, ctx: RequestContext, node_id_1: int, node_id_2: int):
+        db = ctx.db
+        
+        delete_ = delete(node_node).where(
+            ((node_node.c.node1_id == node_id_1) & (node_node.c.node2_id == node_id_2))
+            | ((node_node.c.node1_id == node_id_2) & (node_node.c.node2_id == node_id_1))
+        )
+        deleted = db.execute(delete_).rowcount
+        
+        try:
+            assert deleted > 0, "Нет записей для удаления"
+            print(f"Удалено записей: {deleted}")
+        except AssertionError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        
+        db.commit()
 
 # ----------- CRUD объекты -----------
 
