@@ -6,6 +6,7 @@ import {
   deleteLink,
   getNodeById,
   linkNodes,
+  updateNode,
 } from "../../services/api";
 import DeleteIcon from "@mui/icons-material/Delete";
 import {
@@ -28,6 +29,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { PalettePicker } from "../../components/PalettePicker";
 
 export const BasicDialog = ({
   open = false,
@@ -149,6 +151,7 @@ export const DialogAddSection = ({
 const defaultFormData = {
   name: "",
   description: "",
+  color: '#e31a1c'
 };
 
 export const DialogAddNodeType = ({
@@ -211,6 +214,8 @@ export const DialogAddNodeType = ({
           setFormData((prev) => ({ ...prev, description: e.target.value }))
         }
       />
+      <PalettePicker color={formData.color} onSelect={(color) => setFormData((prev) => ({ ...prev, color }))}/> 
+      {/* FIXME Отправка цвета */}
     </BasicDialog>
   );
 };
@@ -249,6 +254,84 @@ export const DialogAddNode = ({
       onSubmit={handleFormSubmit}
       buttonSubmitText="Добавить"
       isValid={formData.name && nodeType.id}
+    >
+      <TextField
+        autoFocus
+        margin="dense"
+        id="name"
+        name="name"
+        label="Название"
+        type="text"
+        fullWidth
+        variant="standard"
+        value={formData.name}
+        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+        required
+      />
+      <TextField
+        margin="dense"
+        id="description"
+        name="description"
+        label="Описание"
+        type="text"
+        fullWidth
+        variant="standard"
+        value={formData.description}
+        onChange={(e) =>
+          setFormData({ ...formData, description: e.target.value })
+        }
+      />
+    </BasicDialog>
+  );
+};
+
+export const DialogEditNode = ({
+  openDialog,
+  onCloseDialog = () => {},
+  onSubmit = () => {},
+  data = {},
+} = {}) => {
+  const [formData, setFormData] = useState({});
+
+  useEffect(() => {
+    setFormData({ ...data })
+  },[data])
+
+  const newData = useMemo(() => {
+    const currentNewData = {}
+
+    Object.entries(formData).forEach(([k, v]) => {
+      if(data?.[k] !== v){
+        currentNewData[k] = v
+        console.log(k, data?.[k], v)
+      }
+    })  
+
+    return currentNewData
+  }, [data, formData])
+
+  const handleFormSubmit = () => {
+    if(Object.keys(newData).length === 0){ return }
+
+    updateNode({ id: data.id, data: newData })
+      .then(() => {
+        onCloseDialog();
+        setFormData({});
+        onSubmit();
+      })
+      .catch((error) => {
+        console.error(`Error creating node: ${error.message}`);
+      });
+  };
+
+  return (
+    <BasicDialog
+      title={`Редактирование узла: ${data?.name}`}
+      open={openDialog}
+      onClose={onCloseDialog}
+      onSubmit={handleFormSubmit}
+      buttonSubmitText="Обновить"
+      isValid={Object.keys(newData).length > 0}
     >
       <TextField
         autoFocus
