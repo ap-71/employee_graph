@@ -49,19 +49,19 @@ export default function Home() {
     fetchStats();
   }, []);
 
-  const dashboardStats = [
-    { title: 'Сотрудники', value: stats.employees, color: '#4caf50' },
-    { title: 'Отделы', value: stats.departments, color: '#2196f3' },
-    { title: 'Должности', value: stats.positions, color: '#ff9800' },
-    { title: 'Проекты', value: stats.projects, color: '#9c27b0' }
-  ];
+  // const dashboardStats = [
+  //   { title: 'Сотрудники', value: stats.employees, color: '#4caf50' },
+  //   { title: 'Отделы', value: stats.departments, color: '#2196f3' },
+  //   { title: 'Должности', value: stats.positions, color: '#ff9800' },
+  //   { title: 'Проекты', value: stats.projects, color: '#9c27b0' }
+  // ];
 
   const cards = [
     {
-      title: 'Граф',
-      description: 'Просмотр графа',
+      title: 'Графы',
+      description: 'Просмотр графов',
       image: 'https://source.unsplash.com/random/1200x800/?analytics',
-      link: '/graph'
+      link: '/graph/sections'
     },
     {
       title: 'Управление',
@@ -73,7 +73,7 @@ export default function Home() {
 
   return (
     <Box>
-      <Typography variant="h4" gutterBottom sx={{ mb: 3 }}>
+      {/* <Typography variant="h4" gutterBottom sx={{ mb: 3 }}>
         Дашборд
       </Typography>
 
@@ -113,7 +113,7 @@ export default function Home() {
             </Grid>
           ))
         )}
-      </Grid>
+      </Grid> */}
 
       <Typography variant="h4" gutterBottom sx={{ mb: 3 }}>
         Быстрый доступ
