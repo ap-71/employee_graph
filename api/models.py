@@ -9,6 +9,7 @@ from sqlalchemy import (
     UniqueConstraint,
     DateTime,
     func,
+    Text
 )
 from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped, relationship
 from api.db import engine
@@ -173,6 +174,7 @@ class NodeType(Base):
     id = mapped_column(Integer, primary_key=True, index=True)
     name = mapped_column(String, nullable=False)
     description = mapped_column(String, nullable=True)
+    color: Mapped[str] = mapped_column(Text, nullable=False, server_default="#e31a1c")
     dt_create = mapped_column(DateTime, default=func.now(), nullable=False)
     section_id = mapped_column(Integer, ForeignKey("sections.id", ondelete="CASCADE"), nullable=False)
     user_id = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
@@ -214,4 +216,10 @@ class Node(Base):
         primaryjoin=id == node_node.c.node2_id,
         secondaryjoin=id == node_node.c.node1_id,
         back_populates="nodes"
+    )
+    
+    __table_args__ = (
+        UniqueConstraint(
+            "name", "type_id", name="uq__nodes__name_type_id"
+        ),
     )
