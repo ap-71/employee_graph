@@ -84,8 +84,14 @@ export async function getCountPositions() {
 export async function getCountProjects() {
     return await getCounts("projects")
 }
-export async function getGraph({ publicView } = {}) {
-    if( publicView ){
+export async function getGraph({ publicView, sectionId } = {}) {
+    if( publicView && sectionId !== undefined ){
+        return await getData(`${API_BASE_URL}/public/graph/section/${sectionId}`, false);
+    }
+    else if( sectionId !== undefined ){
+        return await getData(`${API_BASE_URL}/graph/section/${sectionId}`);
+    }
+    else if( publicView ){
         return await getData(`${API_BASE_URL}/public/graph`, false);
     } else {
         return await getData(`${API_BASE_URL}/graph`);
@@ -196,6 +202,9 @@ export const deleteSection = async (sectionId) => {
 // export const getNodesBySection = async ({ sectionId }) => {
 //     return await getData(`${API_BASE_URL}/nodes/by-section/${sectionId}`);
 // }
+export const updateNode = async ({ id, data }) => {
+    return await updateData(`${API_BASE_URL}/nodes/${id}`, data);
+}
 export const createNode = async (nodeData) => {
     return await createData(`${API_BASE_URL}/nodes/`, nodeData);
 }
