@@ -12,7 +12,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Management from "./pages/Management";
 import { Graph, GraphPublic } from "./pages/Graph";
-import { ConcretSection, GraphSection } from "./pages/Section/Section";
+import { ConcretSection, GraphConcretSection, GraphSection } from "./pages/Section/Section";
 
 function App() {
   return (
@@ -43,7 +43,7 @@ function App() {
             </Route>
             <Route path="/graph/sections/:sectionId">
               {(params) => (<ProtectedRoute>
-                <GraphSection sectionId={params.sectionId}/>
+                <GraphConcretSection sectionId={params.sectionId}/>
               </ProtectedRoute>
             )}
             </Route>
