@@ -1,6 +1,6 @@
 import { Box, Typography } from "@mui/material";
 import 'reactflow/dist/style.css';
-import GraphComponent from "../components/GraphComponent";
+import { GraphComponent } from "../components/GraphComponent";
 import { useSearchParams } from "wouter";
 
 export function Graph({ publicView=false } = {}) {
