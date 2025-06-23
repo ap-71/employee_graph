@@ -224,6 +224,7 @@ class NodeTypeCreate(BaseModel):
     user_id: int | None = None
     section_id: int
     user_id: int | None = None
+    color: str
 
     class Config:
         from_attributes = True
@@ -236,6 +237,7 @@ class NodeTypeRead(BaseModel):
     dt_create: datetime | None = None
     user: UserSchema | None = None
     nodes: List["NodeRead"] = []
+    color: str
 
     class Config:
         from_attributes = True
@@ -250,6 +252,11 @@ class NodeCreate(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class NodeUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
 
 
 class NodeTypeRef(BaseModel):
