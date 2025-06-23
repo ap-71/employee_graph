@@ -1,4 +1,4 @@
-import { Button, IconButton, Stack, Typography } from "@mui/material";
+import { Box, Button, IconButton, Stack, Typography } from "@mui/material";
 import { useCallback, useEffect, useState } from "react";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -24,9 +24,11 @@ import {
   DialogAddNodeType,
   DialogAddSection,
   DialogDelete,
+  DialogEditNode,
   DialogViewLinkNode,
 } from "./Dialogs";
 import { BasicTable } from "../Table";
+import { GraphSectionComponent } from "../../components/GraphComponent";
 
 export const Section = ({ name = "Разделы", buttonName } = {}) => {
   const [openDialog, openDialogActions, dialogData] = useOpenDialog();
@@ -198,7 +200,7 @@ const useOpenDialog = () => {
 
 export const ConcretSection = ({ sectionId }) => {
   const [openDialog, openDialogActions, dialogData] = useOpenDialog();
-  const [selectedNodeType, setSelectedNodeType] = useState({});
+  // const [selectedNodeType, setSelectedNodeType] = useState({});
   const [sectionData, setSectionData] = useState({});
   const [nodeTypes, setNodeTypes] = useState([]);
 
@@ -216,13 +218,14 @@ export const ConcretSection = ({ sectionId }) => {
       });
   }, [sectionId]);
 
-  const handleOpenDialogNodeAdd = useCallback(
-    (nodeType) => {
-      openDialogActions.openAddNode();
-      setSelectedNodeType(nodeType);
-    },
-    [openDialogActions]
-  );
+  // const handleOpenDialogNodeAdd = useCallback(
+  //   (nodeType) => {
+  //     console.debug(nodeType)
+  //     openDialogActions.openAddNode();
+  //     setSelectedNodeType(nodeType);
+  //   },
+  //   [openDialogActions]
+  // );
 
   const loadNodeTypes = useCallback(() => {
     getNodeTypesBySection({ sectionId })
@@ -299,6 +302,19 @@ export const ConcretSection = ({ sectionId }) => {
             >
               <Typography variant="h5">
                 {nodeType.description || nodeType.name}
+                <div
+                  style={{
+                    display: "inline-block",
+                    marginLeft: 12,
+                    paddingLeft: 10,
+                    background: nodeType.color,
+                    userSelect: "none",
+                    width: 24,
+                    height: 24,
+                    verticalAlign: "middle",
+                    borderRadius: "50%"
+                  }}
+              ></div>
               </Typography>
               <Stack
                 direction="row"
@@ -309,7 +325,7 @@ export const ConcretSection = ({ sectionId }) => {
                 <Button
                   variant="contained"
                   color="primary"
-                  onClick={() => handleOpenDialogNodeAdd(nodeType)}
+                  onClick={() => openDialogActions.openAddNode(nodeType)}
                 >
                   <AddIcon />
                 </Button>
@@ -337,13 +353,13 @@ export const ConcretSection = ({ sectionId }) => {
                         >
                           <VisibilityIcon />
                         </IconButton>
-                        {/* <IconButton
+                        <IconButton
                           color="primary"
                           onClick={() => openDialogActions.editNode(item)}
                           aria-label="edit"
                         >
                           <EditIcon />
-                        </IconButton> */}
+                        </IconButton>
                         <IconButton
                           color="secondary"
                           onClick={() => openDialogActions.openLinkNode(item)}
@@ -373,12 +389,22 @@ export const ConcretSection = ({ sectionId }) => {
         );
       })}
 
+      {/* Редактирование узла */}
+      <DialogEditNode
+        openDialog={openDialog.open === openDialog.editNode}
+        onCloseDialog={openDialogActions.reset}
+        onSubmit={handleFormSubmit}
+        // sectionId={sectionId}
+        data={dialogData}
+      />
+
+      {/* Добавление узла */}
       <DialogAddNode
         openDialog={openDialog.open === openDialog.addNode}
         onCloseDialog={openDialogActions.reset}
         onSubmit={handleFormSubmit}
         sectionId={sectionId}
-        nodeType={selectedNodeType}
+        nodeType={dialogData}
       />
 
       {/* Добавление типа */}
@@ -439,7 +465,7 @@ export const ConcretSection = ({ sectionId }) => {
   );
 };
 
-export const GraphSection = ({ name="Разделы", sectionId, isPublic=false } = {}) => {
+export const GraphSection = ({ name="Графы", sectionId, isPublic=false } = {}) => {
   const [openDialog, openDialogActions, dialogData] = useOpenDialog();
   const [, navigate] = useLocation();
   const [sections, setSections] = useState([]);
@@ -504,6 +530,7 @@ export const GraphSection = ({ name="Разделы", sectionId, isPublic=false 
                 },
                 height: 56,
               }}
+              onClick={() => navigate(`/graph/sections/${section.id}`)}
             >
               <Typography
                 onClick={() => navigate(`/graph/sections/${section.id}`)}
@@ -514,21 +541,24 @@ export const GraphSection = ({ name="Разделы", sectionId, isPublic=false 
           ))}
         </Stack>
       )}
-
-      {/* <DialogAddSection
-        openDialog={openCreateSection}
-        onCloseDialog={() => setOpenCreateSection(false)}
-        onSubmit={() => handleLoadSections()}
-      />
-      <DialogDelete
-        title="Удаление раздела"
-        contentText="Вы уверены, что хотите удалить раздел?"
-        openDialog={openDialog.open === openDialog.deleteSection}
-        onCloseDialog={openDialogActions.reset}
-        onDelete={handleLoadSections}
-        data={dialogData}
-        fetchService={deleteSection}
-      /> */}
     </Stack>
+  );
+}
+
+export const GraphConcretSection = ({headText="", publicView, sectionId }) => {
+  useEffect(()=> {
+    getSectionById({ sectionId }).then(d => {
+
+    }).catch(e => {
+      console.error("Ошибка при получении секции: "+e)
+    })
+  },[sectionId])
+  return(
+    <Box sx={{ flexGrow: 1 }}>
+      <Typography variant="h4" sx={{ mb: 4 }}>
+        {headText}
+      </Typography>
+      <GraphSectionComponent publicView={publicView} sectionId={sectionId}/>
+    </Box>
   );
 }
