@@ -1,5 +1,7 @@
 from typing import Generic, List, TypeVar
-from fastapi import HTTPException
+from fastapi import HTTPException, status
+from psycopg2.errors import UniqueViolation
+import sqlalchemy
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, delete, or_
 
@@ -91,7 +93,16 @@ class CRUDBase(Generic[MODEL, SCHEMA_CREATE, SCHEMA_READ]):
             if value is not None:
                 setattr(obj, field, value)
 
-        db.commit()
+        try:
+            db.commit()
+        except sqlalchemy.exc.IntegrityError as e:
+            if isinstance(e.orig, UniqueViolation):
+                message = "Такое значение уже есть"
+            else:
+                message = "Ошибка при обновлении!"
+                
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=message)
+        
         db.refresh(obj)
 
         return obj
@@ -347,10 +358,7 @@ class CRUDNode(CRUDBase[Node, NodeCreate, NodeRead]):
         section = db.query(Section).filter(Section.id == section_id).first()
         exists_node = (
             db.query(Node)
-            .filter(
-                Node.name == obj_in.name,
-                Node.type_id == obj_in.type_id
-            )
+            .filter(Node.name == obj_in.name, Node.type_id == obj_in.type_id)
             .first()
         )
 
@@ -381,6 +389,21 @@ class CRUDNode(CRUDBase[Node, NodeCreate, NodeRead]):
     def get_by_name(self, db: Session, name: str) -> MODEL | None:
         return db.query(self.model).filter(self.model.name == name).first()
 
+    def get_by_section_id(self, db: Session, section_id: int, offset: int = 0, limit: int | None = None) -> MODEL | None:
+        q =( 
+            db.query(self.model)
+            .filter(
+                self.model.type_id == NodeType.id, 
+                NodeType.section_id == section_id
+            )
+            .offset(offset)
+        )
+        
+        if limit is not None:
+            q = q.limit(limit)
+        
+        return q.all()
+
     def get_by_user_id(self, db: Session, user_id: int) -> List[MODEL]:
         return db.query(self.model).filter(self.model.user_id == user_id).all()
 
@@ -410,30 +433,34 @@ class CRUDNode(CRUDBase[Node, NodeCreate, NodeRead]):
 
         db.execute(
             node_node.insert().values(
-                node1_id=obj_in.node1_id, 
+                node1_id=obj_in.node1_id,
                 node2_id=obj_in.node2_id,
-                user_id=obj_in.user_id
+                user_id=obj_in.user_id,
             )
         )
-        
+
         db.commit()
 
     def delete_link(self, ctx: RequestContext, node_id_1: int, node_id_2: int):
         db = ctx.db
-        
+
         delete_ = delete(node_node).where(
             ((node_node.c.node1_id == node_id_1) & (node_node.c.node2_id == node_id_2))
-            | ((node_node.c.node1_id == node_id_2) & (node_node.c.node2_id == node_id_1))
+            | (
+                (node_node.c.node1_id == node_id_2)
+                & (node_node.c.node2_id == node_id_1)
+            )
         )
         deleted = db.execute(delete_).rowcount
-        
+
         try:
             assert deleted > 0, "Нет записей для удаления"
             print(f"Удалено записей: {deleted}")
         except AssertionError as e:
             raise HTTPException(status_code=400, detail=str(e))
-        
+
         db.commit()
+
 
 # ----------- CRUD объекты -----------
 
