@@ -5,7 +5,7 @@ services:
     build:
       context: ./web
       dockerfile: Dockerfile
-    image: employee_graph_frontend:0.1.0
+    image: employee_graph_frontend:0.1.5
     ports:
       - "${NGINX_HTTPS_PORT}:443"
     volumes:
@@ -20,6 +20,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: employee_graph_api:0.1.5
     expose:
       - "8000"
     environment:
