@@ -149,6 +149,8 @@ class NodeSchema(BaseModel):
     id: str
     name: str
     type: str
+    type_description: str | None = None
+    color: str | None = None
 
 
 class LinkSchema(BaseModel):
@@ -190,6 +192,7 @@ class ConfigNodesSchema(BaseModel):
     node_radius: int | None = None
     multiplier_node_size: float | None = None
     node_labels_show: bool | None = None
+    section_id: int | None = None
 
 
 class UserSchema(BaseModel):

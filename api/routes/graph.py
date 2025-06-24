@@ -1,3 +1,4 @@
+from typing import List
 from fastapi import Depends
 from sqlalchemy import select
 from api.auth import app
@@ -122,12 +123,20 @@ async def get_graph_section_by_id(
     nodes = []
     links = []
 
-    model_nodes = node_crud.get_by_section_id(db=ctx.db, section_id=section_id)
+    model_nodes: List[Node] = node_crud.get_by_section_id(
+        db=ctx.db, section_id=section_id
+    )
 
     # Добавляем узлы
     nodes.extend(
         [
-            NodeSchema(id=f"node-{n.id}", name=n.name, type=n.type.name)
+            NodeSchema(
+                id=f"node-{n.id}",
+                name=n.name,
+                type=n.type.name,
+                type_description=n.type.description,
+                color=n.type.color,
+            )
             for n in model_nodes
         ]
     )

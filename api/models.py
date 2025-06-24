@@ -150,6 +150,7 @@ class Config(Base):
     is_active = mapped_column(Boolean, default=True, nullable=False)
     user_id = mapped_column(Integer)
     dt_create = mapped_column(DateTime, default=func.now(), nullable=False)
+    section_id = mapped_column(Integer, ForeignKey("sections.id", ondelete="CASCADE"), nullable=True)
 
 
 class Section(Base):

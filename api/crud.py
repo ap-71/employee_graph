@@ -100,9 +100,9 @@ class CRUDBase(Generic[MODEL, SCHEMA_CREATE, SCHEMA_READ]):
                 message = "Такое значение уже есть"
             else:
                 message = "Ошибка при обновлении!"
-                
+
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=message)
-        
+
         db.refresh(obj)
 
         return obj
@@ -253,13 +253,20 @@ class CRUDProject(CRUDBase[Project, ProjectCreate, ProjectRead]): ...
 
 class CRUDConfig(CRUDBase[Config, ConfigSchemaCreate, ConfigSchemaRead]):
     def create(
-        self, db: Session, name: str, key: str, value: str, user_id: int | None = None
+        self,
+        db: Session,
+        name: str,
+        key: str,
+        value: str,
+        user_id: int | None = None,
+        section_id: int | None = None,
     ) -> Config:
         obj = self.model(
             name=name,
             key=key,
             value=value,
             user_id=user_id if user_id is not None else -1,
+            section_id=section_id,
         )
 
         db.add(obj)
@@ -269,10 +276,17 @@ class CRUDConfig(CRUDBase[Config, ConfigSchemaCreate, ConfigSchemaRead]):
         return obj
 
     def get(
-        self, db: Session, name: str, key: str | None = None, user_id: int | None = None
+        self,
+        db: Session,
+        name: str,
+        key: str | None = None,
+        user_id: int | None = None,
+        section_id: int | None = None,
     ) -> List[MODEL] | MODEL | None:
         filter_ = [self.model.name == name]
         is_list = True
+
+        filter_.append(self.model.section_id == section_id)
 
         if user_id is not None:
             filter_.append(self.model.user_id == user_id)
@@ -291,13 +305,13 @@ class CRUDConfig(CRUDBase[Config, ConfigSchemaCreate, ConfigSchemaRead]):
         return obj
 
     def update(
-        self, db: Session, name: str, key: str, value: str, user_id: int | None = None
+        self, db: Session, name: str, key: str, value: str, user_id: int | None = None, section_id: int | None = None,
     ):
-        obj = self.get(db, name, key, user_id)
+        obj = self.get(db, name, key, user_id, section_id=section_id)
 
         if not obj:
             return self.create(
-                db, name, key, value, user_id if user_id is not None else -1
+                db, name, key, value, user_id if user_id is not None else -1, section_id
             )
 
         if obj.value != str(value):
@@ -389,19 +403,20 @@ class CRUDNode(CRUDBase[Node, NodeCreate, NodeRead]):
     def get_by_name(self, db: Session, name: str) -> MODEL | None:
         return db.query(self.model).filter(self.model.name == name).first()
 
-    def get_by_section_id(self, db: Session, section_id: int, offset: int = 0, limit: int | None = None) -> MODEL | None:
-        q =( 
+    def get_by_section_id(
+        self, db: Session, section_id: int, offset: int = 0, limit: int | None = None
+    ) -> MODEL | None:
+        q = (
             db.query(self.model)
             .filter(
-                self.model.type_id == NodeType.id, 
-                NodeType.section_id == section_id
+                self.model.type_id == NodeType.id, NodeType.section_id == section_id
             )
             .offset(offset)
         )
-        
+
         if limit is not None:
             q = q.limit(limit)
-        
+
         return q.all()
 
     def get_by_user_id(self, db: Session, user_id: int) -> List[MODEL]:

@@ -26,21 +26,25 @@ async def update_config_nodes(
             name="nodes",
             key="distance",
             value=data.distance,
+            section_id=data.section_id,
         ),
         dict(
             name="nodes",
             key="node_radius",
             value=data.node_radius,
+            section_id=data.section_id,
         ),
         dict(
             name="nodes",
             key="multiplier_node_size",
             value=data.multiplier_node_size,
+            section_id=data.section_id,
         ),
         dict(
             name="nodes",
             key="node_labels_show",
             value=data.node_labels_show,
+            section_id=data.section_id,
         ),
     ]
 
@@ -49,7 +53,11 @@ async def update_config_nodes(
 
 
 @app.get("/config/nodes", response_model=ConfigNodesSchema, tags=["config"])
-async def get_config_nodes(request: Request, db: Session = Depends(get_db)):
+async def get_config_nodes(
+    request: Request, 
+    db: Session = Depends(get_db), 
+    section_id: int | None = None
+):
     try:
         user = check_token(await oauth2_scheme(request), db)
     except HTTPException:
@@ -57,7 +65,13 @@ async def get_config_nodes(request: Request, db: Session = Depends(get_db)):
 
     user_id = user.id if user else None
 
-    config = config_crud.get(db=db, name="nodes", key=None, user_id=user_id)
+    config = config_crud.get(
+        db=db, 
+        name="nodes", 
+        key=None, 
+        user_id=user_id, 
+        section_id=section_id
+    )
 
     data = {}
 
@@ -72,3 +86,16 @@ async def get_config_nodes(request: Request, db: Session = Depends(get_db)):
             data["multiplier_node_size"] = conf.value
 
     return ConfigNodesSchema(**data)
+
+
+@app.get(
+    "/config/nodes/section/{section_id}",
+    response_model=ConfigNodesSchema,
+    tags=["config"],
+)
+async def get_config_nodes_by_section_id(
+    section_id: int, 
+    request: Request, 
+    db: Session = Depends(get_db)
+):
+    return await get_config_nodes(section_id=section_id, request=request, db=db)
