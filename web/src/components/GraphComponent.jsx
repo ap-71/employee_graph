@@ -470,7 +470,13 @@ export function GraphSectionComponent({ publicView = false, sectionId } = {}) {
     height: window.innerHeight,
   });
   const [, navigate] = useLocation();
-
+//   const nodeTypes = {
+//   employee: { type: "employee", color: "#1f78b4", name: "Сотрудник" }, // синий
+//   department: { type: "department", color: "#33a02c", name: "Отдел" }, // зелёный
+//   position: { type: "position", color: "#e31a1c", name: "Должность" }, // красный
+//   project: { type: "project", color: "#e1e1e1", name: "Проект" },
+// };
+  const [nodeTypes, setNodeTypes] = useState({})
   const fgRef = useRef();
   const [selectedTypeNodes, setSelectedTypeNodes] = useState([]);
   const [highlightNode, setHighlightNode] = useState(null);
@@ -482,7 +488,7 @@ export function GraphSectionComponent({ publicView = false, sectionId } = {}) {
   const [configIsChenged, setConfigIsChenged] = useState(false);
 
   useEffect(() => {
-    getNodesConfig(!publicView)
+    getNodesConfig(!publicView, sectionId)
       .then((data) => {
         setNodeConfig((prev) => ({
           ...prev,
@@ -498,7 +504,7 @@ export function GraphSectionComponent({ publicView = false, sectionId } = {}) {
         console.debug("error => " + e);
         setNodeConfig((prev) => ({ ...prev, ...defaultNodeConfig }));
       });
-  }, [publicView]);
+  }, [publicView, sectionId]);
 
   useEffect(() => {
     // Функция для обновления состояния размера окна
@@ -563,16 +569,17 @@ export function GraphSectionComponent({ publicView = false, sectionId } = {}) {
     getGraph({ publicView, sectionId })
       .then((data) => {
         // Удаляем зафиксированные координаты, чтобы включилась физика
-        console.debug(sectionId, data);
+        const currentNodeTypes = {}
         const cleanedData = {
           nodes: data.nodes.map((node) => {
             // eslint-disable-next-line no-unused-vars
             const { x, y, vx, vy, ...rest } = node;
+            currentNodeTypes[rest.type] = rest
             return rest;
           }),
           links: data.links,
         };
-
+        setNodeTypes(currentNodeTypes)
         setGraphDataRaw(cleanedData);
       })
       .catch((e) => {
@@ -661,7 +668,7 @@ export function GraphSectionComponent({ publicView = false, sectionId } = {}) {
   }, []);
 
   const handleSaveNodeConfig = useCallback(() => {
-    saveNodesConfig(nodeConfig, !publicView)
+    saveNodesConfig(nodeConfig, !publicView, sectionId)
       .then((data) => {
         console.debug("Сохранено", data);
         setConfigIsChenged(false);
@@ -669,7 +676,7 @@ export function GraphSectionComponent({ publicView = false, sectionId } = {}) {
       .catch((e) => {
         console.debug("error => " + e);
       });
-  }, [nodeConfig, publicView]);
+  }, [nodeConfig, publicView, sectionId]);
 
   if (loading) {
     return (
@@ -814,14 +821,22 @@ export function GraphSectionComponent({ publicView = false, sectionId } = {}) {
             bottom: -2,
             backdropFilter: "blur(8px)",
             backgroundColor: "rgba(18, 18, 18, 0.8)",
+            maxWidth: "80%"
           }}
         >
           <Stack
             direction="row"
             margin={2}
-            style={{ color: "#ccc", fontSize: 14 }}
+            style={{ 
+              color: "#ccc", 
+              fontSize: 14, 
+              overflow: "auto", 
+              maxWidth: "100%",
+              scrollbarWidth: "thin",
+              scrollbarColor: "rgba(255, 255, 255, .1) rgba(0, 0, 0, 0)"
+            }}
           >
-            <b>Типы узлов:</b> &nbsp;
+            <b style={{ whiteSpace: "nowrap"}}>Типы узлов:</b> &nbsp;
             {Object.entries(nodeTypes).map(([key, { color, name }]) => (
               <span
                 key={key}
