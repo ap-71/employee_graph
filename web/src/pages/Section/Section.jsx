@@ -546,13 +546,13 @@ export const GraphSection = ({ name="Графы", sectionId, isPublic=false } = 
 }
 
 export const GraphConcretSection = ({headText="", publicView, sectionId }) => {
-  useEffect(()=> {
-    getSectionById({ sectionId }).then(d => {
+  // useEffect(()=> {
+  //   getSectionById({ sectionId }).then(d => {
 
-    }).catch(e => {
-      console.error("Ошибка при получении секции: "+e)
-    })
-  },[sectionId])
+  //   }).catch(e => {
+  //     console.error("Ошибка при получении секции: "+e)
+  //   })
+  // },[sectionId])
   return(
     <Box sx={{ flexGrow: 1 }}>
       <Typography variant="h4" sx={{ mb: 4 }}>
