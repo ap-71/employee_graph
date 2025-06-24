@@ -44,7 +44,7 @@ export default function Layout({ children }) {
   const menuItems = isAuthenticated
     ? [
       { text: 'Главная', icon: <HomeIcon />, path: '/' },
-      { text: 'Граф', icon: <ScatterPlotIcon />, path: '/graph/sections' },
+      { text: 'Графы', icon: <ScatterPlotIcon />, path: '/graph/sections' },
       { text: 'Управление', icon: <ManageAccountsIcon />, path: '/management' },
     ]
     : [
