@@ -837,9 +837,10 @@ export function GraphSectionComponent({ publicView = false, sectionId } = {}) {
             }}
           >
             <b style={{ whiteSpace: "nowrap"}}>Типы узлов:</b> &nbsp;
-            {Object.entries(nodeTypes).map(([key, { color, name }]) => (
+            {Object.entries(nodeTypes).map(([key, { color, type, type_description }]) => (
               <span
                 key={key}
+                title={type_description || type}
                 style={{
                   display: "inline-block",
                   marginRight: 16,
@@ -854,7 +855,7 @@ export function GraphSectionComponent({ publicView = false, sectionId } = {}) {
                 }}
                 onClick={() => handleTypeNodeClick(key)}
               >
-                {name}
+                {type}
               </span>
             ))}
           </Stack>
