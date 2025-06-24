@@ -465,11 +465,9 @@ export const ConcretSection = ({ sectionId }) => {
   );
 };
 
-export const GraphSection = ({ name="Графы", sectionId, isPublic=false } = {}) => {
-  const [openDialog, openDialogActions, dialogData] = useOpenDialog();
+export const GraphSection = ({ name="Графы" } = {}) => {
   const [, navigate] = useLocation();
   const [sections, setSections] = useState([]);
-  const [openCreateSection, setOpenCreateSection] = useState(false);
 
   const handleLoadSections = useCallback(() => {
     getSections()
@@ -546,13 +544,6 @@ export const GraphSection = ({ name="Графы", sectionId, isPublic=false } = 
 }
 
 export const GraphConcretSection = ({headText="", publicView, sectionId }) => {
-  // useEffect(()=> {
-  //   getSectionById({ sectionId }).then(d => {
-
-  //   }).catch(e => {
-  //     console.error("Ошибка при получении секции: "+e)
-  //   })
-  // },[sectionId])
   return(
     <Box sx={{ flexGrow: 1 }}>
       <Typography variant="h4" sx={{ mb: 4 }}>
